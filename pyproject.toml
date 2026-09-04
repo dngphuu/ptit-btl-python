@@ -1,0 +1,43 @@
+[project]
+name = "ptit-btl-python"
+version = "0.1.0"
+description = "VisionBrick – Hand-Tracked Brick Breaker with MediaPipe"
+requires-python = ">=3.10"
+dependencies = [
+    "pygame-ce>=2.5",
+    "opencv-python>=4.8",
+    "mediapipe>=0.10",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-timeout>=2.3",
+    "ruff>=0.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+timeout = 30
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-timeout>=2.4.0",
+    "ruff>=0.16.6",
+]
