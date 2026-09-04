@@ -12,39 +12,57 @@
 ptit-btl-python/
 ├── src/
 │   ├── config.py              # ALL constants live here (dimensions, speeds, thresholds)
+│   ├── core/
+│   │   └── states.py          # GameState enum (MAIN_MENU, PLAYING, SETTINGS, GAME_OVER, QUIT)
 │   ├── filters/
 │   │   └── ema.py             # Exponential Moving Average smoother
+│   ├── screens/
+│   │   └── main_menu.py       # Main menu screen (title banner, buttons, animated background)
+│   ├── ui/
+│   │   ├── button.py          # MenuButton component
+│   │   ├── gif_background.py  # Animated GIF background loader & renderer
+│   │   └── nine_slice.py      # 9-slice panel rendering
 │   └── vision/
 │       ├── camera.py          # OpenCV capture, threaded frame buffer
 │       └── input_processor.py # MediaPipe landmark → normalized (x, y) output
 ├── assets/
-│   ├── sprites/ui/kenney_pixel_adventure/
-│   │   ├── tiles/large/{thick,thin}_outline/   # 32×32 px PNGs  (tile_0000–0090)
-│   │   ├── tiles/small/{thick,thin}_outline/   # 16×16 px PNGs  (tile_0000–0160)
-│   │   └── tilesheets/{large,small}/{thick,thin}_outline/  # tilemap.png + tilemap_packed.png
 │   ├── audio/                 # SFX / music
-│   ├── fonts/
+│   ├── backgrounds/           # Background graphics (e.g. animated GIF)
+│   ├── fonts/                 # TTF fonts (Minecraft.ttf, ThaleahFat.ttf)
 │   ├── shaders/
+│   ├── sprites/
+│   │   ├── tilemaps/          # Block, pattern, platformer tilemaps
+│   │   ├── tiles/             # Individual tile sprites
+│   │   └── ui/
+│   │       ├── kenney_pixel_adventure/  # UI tiles (large/small, thick/thin outline)
+│   │       └── menu/                    # Menu UI textures (main_menu_btn_bg, main_title_bg)
 │   └── vfx/
 ├── tests/
-├── main.py                    # thin entry point → uv run python main.py
+│   ├── test_filters.py
+│   └── test_input_processor.py
+├── main.py                    # Entry point & state machine loop → uv run python main.py
 ├── pyproject.toml
 └── AGENT.md
 ```
 
-> **Not yet created:** `src/core/` (game loop, state machine) · `src/entities/` (paddle, ball, brick).
-> Create them when implementing gameplay, following the planned architecture below.
+> **Current status:**
+> - **Implemented:** Hand tracking vision pipeline (`src/vision/`), EMA filter (`src/filters/`), Main menu screen & UI primitives (`src/screens/`, `src/ui/`), GameState machine (`src/core/states.py`, `main.py`).
+> - **Next up:** Gameplay screen / game loop (`src/core/game.py` or `src/screens/gameplay.py`), core entities (`src/entities/paddle.py`, `ball.py`, `brick.py`).
 
-## 3. Planned Architecture (implement as needed)
+## 3. Architecture & Roadmap
 
-| Module                   | Responsibility                             |
-| ------------------------ | ------------------------------------------ |
-| `src/core/game.py`       | Main loop, clock, event dispatch           |
-| `src/core/states.py`     | State machine: `Menu → Playing → GameOver` |
-| `src/core/renderer.py`   | All `pygame` draw calls                    |
-| `src/entities/paddle.py` | Paddle rect, move from normalized x        |
-| `src/entities/ball.py`   | Ball physics, velocity                     |
-| `src/entities/brick.py`  | Brick grid, HP, destruction                |
+| Module                   | Responsibility                             | Status      |
+| ------------------------ | ------------------------------------------ | ----------- |
+| `src/vision/camera.py`   | OpenCV capture, threaded frame buffer      | Implemented |
+| `src/vision/input_processor.py` | MediaPipe landmark → normalized (x, y) | Implemented |
+| `src/filters/ema.py`     | Coordinate smoothing filter                | Implemented |
+| `src/core/states.py`     | GameState enum (`MAIN_MENU`, `PLAYING`...) | Implemented |
+| `src/ui/`                | UI primitives (`button`, `nine_slice`, etc.)| Implemented |
+| `src/screens/main_menu.py`| Main menu screen & event handling         | Implemented |
+| `src/entities/paddle.py` | Paddle rect, move from normalized x        | Planned     |
+| `src/entities/ball.py`   | Ball physics, velocity, collisions         | Planned     |
+| `src/entities/brick.py`  | Brick grid, HP, destruction                | Planned     |
+| `src/core/game.py`       | Gameplay session loop & collision manager  | Planned     |
 
 ## 4. Essential Commands
 
