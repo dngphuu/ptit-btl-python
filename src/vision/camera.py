@@ -68,12 +68,17 @@ class CameraPipeline:
         target_fps: int = config.CAMERA_TARGET_FPS,
         queue_maxsize: int = config.CAMERA_QUEUE_MAXSIZE,
         queue_timeout: float = config.CAMERA_QUEUE_TIMEOUT,
+        backend: int = cv2.CAP_DSHOW,
     ) -> None:
         self._camera_index = camera_index
         self._width = width
         self._height = height
         self._target_fps = target_fps
         self._queue_timeout = queue_timeout
+        # CAP_DSHOW (DirectShow) is far more reliable than the default MSMF
+        # backend on Windows — MSMF can silently return no frames even after
+        # isOpened() returns True.  On non-Windows platforms pass cv2.CAP_ANY.
+        self._backend = backend
 
         # maxsize=1 → producer drops stale frames, consumer always gets fresh
         self._frame_queue: queue.Queue[np.ndarray] = queue.Queue(maxsize=queue_maxsize)
@@ -179,7 +184,7 @@ class CameraPipeline:
                old frame first, then insert the new one.  This ensures the
                consumer always sees the *latest* frame, never a stale one.
         """
-        cap = cv2.VideoCapture(self._camera_index)
+        cap = cv2.VideoCapture(self._camera_index, self._backend)
         if not cap.isOpened():
             logger.error(
                 "Cannot open camera device %d. "

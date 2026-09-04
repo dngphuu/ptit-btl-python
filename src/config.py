@@ -29,12 +29,19 @@ CAMERA_QUEUE_TIMEOUT: float = 0.005  # 5 ms
 CAMERA_QUEUE_MAXSIZE: int = 1
 
 # ---------------------------------------------------------------------------
-# MediaPipe Hands
+# MediaPipe Hands (Tasks API – mediapipe >= 1.0)
 # ---------------------------------------------------------------------------
 MP_MAX_NUM_HANDS: int = 1
 MP_MODEL_COMPLEXITY: int = 0  # 0 = lite (fastest)
 MP_MIN_DETECTION_CONFIDENCE: float = 0.6
 MP_MIN_TRACKING_CONFIDENCE: float = 0.5
+# Minimum confidence that a hand is present in a frame (Tasks API only)
+MP_MIN_PRESENCE_CONFIDENCE: float = 0.5
+
+# Path to the hand_landmarker.task bundle (relative to repo root).
+# Download via: https://storage.googleapis.com/mediapipe-models/hand_landmarker/
+#               hand_landmarker/float16/latest/hand_landmarker.task
+MP_MODEL_PATH: str = "models/hand_landmarker.task"
 
 # The landmark index used for paddle control (index-finger MCP = 5).
 HAND_LANDMARK_INDEX: int = 5
