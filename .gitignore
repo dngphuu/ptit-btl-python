@@ -1,0 +1,136 @@
+﻿# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+MANIFEST
+
+# =============================================================================
+# Virtual environments (uv / venv / pyenv)
+# =============================================================================
+.venv/
+venv/
+env/
+ENV/
+.python-version.local
+
+# uv cache (local project cache, not the lock file)
+.uv/
+
+# =============================================================================
+# Testing & coverage
+# =============================================================================
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+nosetests.xml
+pytest-results.xml
+
+# =============================================================================
+# Linting / formatting (ruff)
+# =============================================================================
+.ruff_cache/
+
+# =============================================================================
+# Type checking
+# =============================================================================
+.mypy_cache/
+.pytype/
+.pyre/
+
+# =============================================================================
+# Build / packaging
+# =============================================================================
+*.whl
+*.tar.gz
+
+# =============================================================================
+# IDEs & editors
+# =============================================================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains (PyCharm, etc.)
+.idea/
+*.iml
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# OS-generated files
+# =============================================================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+.fuse_hidden*
+.directory
+.Trash-*
+
+# =============================================================================
+# Game / runtime artifacts
+# =============================================================================
+# Pygame / OpenCV logs and crash dumps
+*.log
+crash_*.txt
+
+# MediaPipe model cache (downloaded at runtime)
+mediapipe_cache/
+
+# Screenshots or recordings captured during gameplay
+screenshots/
+recordings/
+*.mp4
+*.avi
+*.mkv
+
+# Save data / user preferences generated at runtime
+saves/
+*.sav
+*.dat
+
+# =============================================================================
+# Project-specific
+# =============================================================================
+# Mockup exports (keep sources, ignore rendered exports if any)
+mockups/exports/
+
+# Temporary / scratch files
+*.tmp
+*.bak
+*.orig
