@@ -13,6 +13,7 @@ ptit-btl-python/
 ├── src/
 │   ├── config.py              # ALL constants live here (dimensions, speeds, thresholds)
 │   ├── core/
+│   │   ├── audio.py           # BGM and sound effect playback & audio extraction
 │   │   └── states.py          # GameState enum (MAIN_MENU, PLAYING, SETTINGS, GAME_OVER, QUIT)
 │   ├── filters/
 │   │   └── ema.py             # Exponential Moving Average smoother
@@ -20,14 +21,14 @@ ptit-btl-python/
 │   │   └── main_menu.py       # Main menu screen (title banner, buttons, animated background)
 │   ├── ui/
 │   │   ├── button.py          # MenuButton component
-│   │   ├── gif_background.py  # Animated GIF background loader & renderer
+│   │   ├── video_background.py# Looping video background player (OpenCV)
 │   │   └── nine_slice.py      # 9-slice panel rendering
 │   └── vision/
 │       ├── camera.py          # OpenCV capture, threaded frame buffer
 │       └── input_processor.py # MediaPipe landmark → normalized (x, y) output
 ├── assets/
 │   ├── audio/                 # SFX / music
-│   ├── backgrounds/           # Background graphics (e.g. animated GIF)
+│   ├── backgrounds/           # Background graphics and video (e.g. Clouds.mp4)
 │   ├── fonts/                 # TTF fonts (Minecraft.ttf, ThaleahFat.ttf)
 │   ├── shaders/
 │   ├── sprites/

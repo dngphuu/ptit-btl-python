@@ -11,7 +11,7 @@ Visual layout (800 x 600 window):
   │          [SETTINGS]            │                                  y=376
   │          [ EXIT   ]            │                                  y=470
   └────────────────────────────────┘
-Background: animated cloud GIF (no audio).
+Background: animated cloud video with looping BGM.
 """
 
 from __future__ import annotations
@@ -21,10 +21,11 @@ import os
 import pygame
 
 from src.config import SCREEN_HEIGHT, SCREEN_WIDTH
+from src.core.audio import play_music, stop_music
 from src.core.states import GameState
 from src.ui.button import MenuButton
-from src.ui.gif_background import GifBackground
 from src.ui.nine_slice import NineSlicePanel
+from src.ui.video_background import VideoBackground
 
 # ---------------------------------------------------------------------------
 # Asset paths (relative to repo root)
@@ -32,7 +33,7 @@ from src.ui.nine_slice import NineSlicePanel
 _TILE_THICK = "assets/sprites/ui/kenney_pixel_adventure/tiles/large/thick_outline"
 _TITLE_BG_IMG = "assets/sprites/ui/menu/main_title_bg.png"
 _BTN_BG_IMG = "assets/sprites/ui/menu/main_menu_btn_bg.png"
-_BG_GIF = "assets/backgrounds/Clouds_drifting_in_blue_sky.gif"
+_BG_VIDEO = "assets/backgrounds/Clouds.mp4"
 _FONT_TITLE = "assets/fonts/ThaleahFat.ttf"
 _FONT_BTN = "assets/fonts/Minecraft.ttf"
 
@@ -65,7 +66,7 @@ class MainMenu:
         self._next_state: GameState | None = None
 
         # ── background ────────────────────────────────────────────────────
-        self._bg = GifBackground(_BG_GIF, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        self._bg = VideoBackground(_BG_VIDEO, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
         # ── fonts ─────────────────────────────────────────────────────────
         self._title_font = pygame.font.Font(_FONT_TITLE, _TITLE_FONT_SIZE)
@@ -130,6 +131,21 @@ class MainMenu:
                 text_color=_BTN_TEXT_COLOR,
             )
             self._buttons.append((btn, state))
+
+        # ── audio ─────────────────────────────────────────────────────────
+        self.play_bgm()
+
+    # ------------------------------------------------------------------
+    # Audio interface
+    # ------------------------------------------------------------------
+
+    def play_bgm(self) -> None:
+        """Start playing main-menu background music on loop."""
+        play_music()
+
+    def stop_bgm(self) -> None:
+        """Stop main-menu background music."""
+        stop_music()
 
     # ------------------------------------------------------------------
     # Game-loop interface

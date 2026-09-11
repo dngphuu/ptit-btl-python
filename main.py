@@ -18,10 +18,14 @@ from src.screens.main_menu import MainMenu
 
 def main() -> None:
     pygame.init()
-    # Mixer is initialised for future audio; the background GIF has no audio.
     pygame.mixer.init()
 
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    # Enable maximizing and resizing while automatically preserving the
+    # logical 800x600 resolution and aspect ratio.
+    screen = pygame.display.set_mode(
+        (SCREEN_WIDTH, SCREEN_HEIGHT),
+        pygame.RESIZABLE | pygame.SCALED,
+    )
     pygame.display.set_caption("Brick Breaker")
     clock = pygame.time.Clock()
 
@@ -35,6 +39,11 @@ def main() -> None:
         for ev in events:
             if ev.type == pygame.QUIT:
                 state = GameState.QUIT
+            elif ev.type == pygame.KEYDOWN:
+                if ev.key == pygame.K_F11 or (
+                    ev.key == pygame.K_RETURN and (ev.mod & pygame.KMOD_ALT)
+                ):
+                    pygame.display.toggle_fullscreen()
 
         if state == GameState.MAIN_MENU:
             menu.handle_events(events)
@@ -62,6 +71,7 @@ def main() -> None:
 
         pygame.display.flip()
 
+    menu.stop_bgm()
     pygame.quit()
     sys.exit(0)
 

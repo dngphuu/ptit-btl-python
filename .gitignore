@@ -112,13 +112,6 @@ crash_*.txt
 # MediaPipe model cache (downloaded at runtime)
 mediapipe_cache/
 
-# Screenshots or recordings captured during gameplay
-screenshots/
-recordings/
-*.mp4
-*.avi
-*.mkv
-
 # Save data / user preferences generated at runtime
 saves/
 *.sav

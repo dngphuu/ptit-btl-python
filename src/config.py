@@ -66,3 +66,9 @@ PADDLE_WIDTH: int = 100
 PADDLE_HEIGHT: int = 14
 PADDLE_SPEED: int = 8  # pixels / frame (keyboard fallback)
 PADDLE_Y_OFFSET: int = 40  # distance from bottom of screen
+
+# ---------------------------------------------------------------------------
+# Audio / BGM
+# ---------------------------------------------------------------------------
+MENU_BGM_PATH: str = "assets/audio/menu_bgm.ogg"
+MENU_BGM_VOLUME: float = 0.5
