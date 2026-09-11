@@ -47,8 +47,8 @@ ptit-btl-python/
 ```
 
 > **Current status:**
-> - **Implemented:** Hand tracking vision pipeline (`src/vision/`), EMA filter (`src/filters/`), Main menu screen & UI primitives (`src/screens/`, `src/ui/`), GameState machine (`src/core/states.py`, `main.py`).
-> - **Next up:** Gameplay screen / game loop (`src/core/game.py` or `src/screens/gameplay.py`), core entities (`src/entities/paddle.py`, `ball.py`, `brick.py`).
+> - **Implemented:** Hand tracking vision pipeline (`src/vision/`), EMA filter (`src/filters/`), Main menu screen & UI primitives (`src/screens/main_menu.py`, `src/ui/`), Gameplay screen with HUD and interactive exit button (`src/screens/gameplay.py`), GameState machine (`src/core/states.py`, `main.py`).
+> - **Next up:** Core entities (`src/entities/paddle.py`, `ball.py`, `brick.py`), gameplay session loop & collision manager (`src/core/game.py`).
 
 ## 3. Architecture & Roadmap
 
@@ -58,8 +58,9 @@ ptit-btl-python/
 | `src/vision/input_processor.py` | MediaPipe landmark → normalized (x, y) | Implemented |
 | `src/filters/ema.py`     | Coordinate smoothing filter                | Implemented |
 | `src/core/states.py`     | GameState enum (`MAIN_MENU`, `PLAYING`...) | Implemented |
-| `src/ui/`                | UI primitives (`button`, `nine_slice`, etc.)| Implemented |
+| `src/ui/`                | UI primitives (`button`, etc.)             | Implemented |
 | `src/screens/main_menu.py`| Main menu screen & event handling         | Implemented |
+| `src/screens/gameplay.py`| Gameplay screen frame, HUD, and buttons   | Implemented |
 | `src/entities/paddle.py` | Paddle rect, move from normalized x        | Planned     |
 | `src/entities/ball.py`   | Ball physics, velocity, collisions         | Planned     |
 | `src/entities/brick.py`  | Brick grid, HP, destruction                | Planned     |

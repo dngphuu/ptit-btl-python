@@ -72,6 +72,8 @@ PADDLE_Y_OFFSET: int = 40  # distance from bottom of screen
 # ---------------------------------------------------------------------------
 MENU_BGM_PATH: str = "assets/audio/menu_bgm.ogg"
 MENU_BGM_VOLUME: float = 0.5
+GAME_BGM_PATH: str = "assets/audio/game_bgm.ogg"
+GAME_BGM_VOLUME: float = 0.5
 
 # ---------------------------------------------------------------------------
 # Main menu / UI assets
@@ -81,3 +83,15 @@ MAIN_TITLE_PATH: str = "assets/sprites/ui/menu/main_title.png"
 MAIN_MENU_BTN_PATH: str = "assets/sprites/ui/menu/main_menu_btn_bg.png"
 FONT_PRIMARY_PATH: str = "assets/fonts/ThaleahFat.ttf"
 FONT_SECONDARY_PATH: str = "assets/fonts/Minecraft.ttf"
+
+# ---------------------------------------------------------------------------
+# Gameplay / UI assets
+# ---------------------------------------------------------------------------
+MAIN_GAME_BG_PATH: str = "assets/backgrounds/main_game_frame.png"
+GAME_EXIT_BTN_PATH: str = "assets/sprites/ui/game/btn_exit.png"
+GAME_PAUSE_BTN_PATH: str = "assets/sprites/ui/game/btn_pause.png"
+HEART_ICON_PATH: str = "assets/sprites/ui/game/heart.png"
+HEART_SHEET_PATH: str = "assets/heart.png"
+GAME_EXIT_BTN_RECT: tuple[int, int, int, int] = (684, 20, 99, 99)
+GAME_PAUSE_BTN_RECT: tuple[int, int, int, int] = (20, 20, 99, 99)
+GAME_HUD_RECT: tuple[int, int, int, int] = (144, 46, 516, 136)

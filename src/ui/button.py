@@ -20,14 +20,16 @@ class MenuButton:
     def __init__(
         self,
         rect: pygame.Rect,
-        label: str,
+        label: str = "",
         bg_surface: pygame.Surface | None = None,
         font: pygame.font.Font | None = None,
         text_color: tuple[int, int, int] = (66, 19, 14),
         hover_text_color: tuple[int, int, int] | None = (130, 38, 28),
+        press_offset: int = 2,
     ) -> None:
         self.rect = rect
         self.label = label
+        self.press_offset = press_offset
         self._font = font if font is not None else pygame.font.Font(None, 24)
         self._text_color = text_color
         self._hover_text_color = hover_text_color if hover_text_color is not None else text_color
@@ -84,7 +86,7 @@ class MenuButton:
 
     def draw(self, surface: pygame.Surface) -> None:
         """Render the button to *surface* with hover and press effects."""
-        y_offset = 2 if self._pressed else 0
+        y_offset = self.press_offset if self._pressed else 0
         draw_rect = self.rect.move(0, y_offset)
 
         # 1. Background (if provided) or overlay
@@ -101,6 +103,7 @@ class MenuButton:
             surface.blit(self._overlay_hover, draw_rect.topleft)
 
         # 2. Centred label
-        color = self._hover_text_color if self._hovered else self._text_color
-        text = self._font.render(self.label, True, color)
-        surface.blit(text, text.get_rect(center=draw_rect.center))
+        if self.label:
+            color = self._hover_text_color if self._hovered else self._text_color
+            text = self._font.render(self.label, True, color)
+            surface.blit(text, text.get_rect(center=draw_rect.center))

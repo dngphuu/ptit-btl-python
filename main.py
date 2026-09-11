@@ -13,6 +13,7 @@ import pygame
 
 from src.config import SCREEN_HEIGHT, SCREEN_WIDTH, TARGET_FPS
 from src.core.states import GameState
+from src.screens.gameplay import GameplayScreen
 from src.screens.main_menu import MainMenu
 
 
@@ -31,6 +32,7 @@ def main() -> None:
 
     state: GameState = GameState.MAIN_MENU
     menu = MainMenu(screen)
+    gameplay = GameplayScreen(screen)
 
     while state != GameState.QUIT:
         dt = clock.tick(TARGET_FPS) / 1000.0
@@ -53,11 +55,14 @@ def main() -> None:
             next_st = menu.next_state
             if next_st is not None:
                 state = next_st
-                # TODO: remove these stubs once gameplay screens exist
-                if state in (GameState.PLAYING, GameState.SETTINGS):
-                    print(f"[TODO] Transition to {state.name}")
+                menu._next_state = None  # reset so menu is ready upon return
+                if state == GameState.PLAYING:
+                    menu.stop_bgm()
+                    gameplay.reset_state()
+                    gameplay.play_bgm()
+                elif state == GameState.SETTINGS:
+                    print("[TODO] Transition to SETTINGS")
                     state = GameState.MAIN_MENU
-                    menu._next_state = None  # reset so menu stays reactive
 
         elif state == GameState.SETTINGS:
             # TODO: settings screen
@@ -65,13 +70,23 @@ def main() -> None:
             menu._next_state = None
 
         elif state == GameState.PLAYING:
-            # TODO: gameplay
-            state = GameState.MAIN_MENU
-            menu._next_state = None
+            gameplay.handle_events(events)
+            gameplay.update(dt)
+            gameplay.draw()
+
+            next_st = gameplay.next_state
+            if next_st is not None:
+                state = next_st
+                gameplay.reset_state()
+                gameplay.stop_bgm()
+                if state == GameState.MAIN_MENU:
+                    menu._next_state = None
+                    menu.play_bgm()
 
         pygame.display.flip()
 
     menu.stop_bgm()
+    gameplay.stop_bgm()
     pygame.quit()
     sys.exit(0)
 
