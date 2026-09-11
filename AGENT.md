@@ -13,34 +13,34 @@ ptit-btl-python/
 ├── src/
 │   ├── config.py              # ALL constants live here (dimensions, speeds, thresholds)
 │   ├── core/
-│   │   ├── audio.py           # BGM and sound effect playback & audio extraction
+│   │   ├── audio.py           # BGM and sound effect playback
 │   │   └── states.py          # GameState enum (MAIN_MENU, PLAYING, SETTINGS, GAME_OVER, QUIT)
 │   ├── filters/
 │   │   └── ema.py             # Exponential Moving Average smoother
 │   ├── screens/
-│   │   └── main_menu.py       # Main menu screen (title banner, buttons, animated background)
+│   │   └── main_menu.py       # Main menu screen (cave background, stone title banner, buttons)
 │   ├── ui/
-│   │   ├── button.py          # MenuButton component
-│   │   ├── video_background.py# Looping video background player (OpenCV)
-│   │   └── nine_slice.py      # 9-slice panel rendering
+│   │   └── button.py          # MenuButton component (hover & press feedback)
 │   └── vision/
 │       ├── camera.py          # OpenCV capture, threaded frame buffer
 │       └── input_processor.py # MediaPipe landmark → normalized (x, y) output
 ├── assets/
-│   ├── audio/                 # SFX / music
-│   ├── backgrounds/           # Background graphics and video (e.g. Clouds.mp4)
+│   ├── audio/                 # SFX / music (menu_bgm.ogg)
+│   ├── backgrounds/           # Background frames (main_menu_frame.png)
 │   ├── fonts/                 # TTF fonts (Minecraft.ttf, ThaleahFat.ttf)
 │   ├── shaders/
 │   ├── sprites/
 │   │   ├── tilemaps/          # Block, pattern, platformer tilemaps
 │   │   ├── tiles/             # Individual tile sprites
 │   │   └── ui/
-│   │       ├── kenney_pixel_adventure/  # UI tiles (large/small, thick/thin outline)
-│   │       └── menu/                    # Menu UI textures (main_menu_btn_bg, main_title_bg)
+│   │       └── menu/          # Stone UI textures (main_menu_btn_bg, main_title)
 │   └── vfx/
+├── mockups/                   # Full-resolution mock design images (main_menu.png, main_menu_frame.png)
 ├── tests/
+│   ├── test_audio.py
 │   ├── test_filters.py
-│   └── test_input_processor.py
+│   ├── test_input_processor.py
+│   └── test_main_menu.py
 ├── main.py                    # Entry point & state machine loop → uv run python main.py
 ├── pyproject.toml
 └── AGENT.md

@@ -3,15 +3,15 @@ src/screens/main_menu.py
 ========================
 Main-menu screen for Brick Breaker.
 
-Visual layout (800 x 600 window):
-  ┌────────────────────────────────┐
-  │       [  BRICK BREAKER  ]      │  <- thick-outline wood panel, y=60
-  │                                │
-  │          [ START  ]            │  <- thin-outline beige button, y=282
-  │          [SETTINGS]            │                                  y=376
-  │          [ EXIT   ]            │                                  y=470
-  └────────────────────────────────┘
-Background: animated cloud video with looping BGM.
+Visual layout (800 x 600 window, Cave theme matching mock design):
+  ┌────────────────────────────────────────┐
+  │         [ BRICK BREAKER ]              │  <- Stone banner at top, y=44
+  │                                        │
+  │            [  START   ]                │  <- Stone slab button, y=224
+  │            [ SETTINGS ]                │  <- Stone slab button, y=335
+  │            [   EXIT   ]                │  <- Stone slab button, y=445
+  └────────────────────────────────────────┘
+Background: Cave mine scene with stalactites, mushrooms, crystals, and pickaxe.
 """
 
 from __future__ import annotations
@@ -20,115 +20,107 @@ import os
 
 import pygame
 
-from src.config import SCREEN_HEIGHT, SCREEN_WIDTH
+from src.config import (
+    FONT_PRIMARY_PATH,
+    FONT_SECONDARY_PATH,
+    MAIN_MENU_BG_PATH,
+    MAIN_MENU_BTN_PATH,
+    MAIN_TITLE_PATH,
+    SCREEN_HEIGHT,
+    SCREEN_WIDTH,
+)
 from src.core.audio import play_music, stop_music
 from src.core.states import GameState
 from src.ui.button import MenuButton
-from src.ui.nine_slice import NineSlicePanel
-from src.ui.video_background import VideoBackground
 
 # ---------------------------------------------------------------------------
-# Asset paths (relative to repo root)
+# Layout & styling constants (800 x 600 logical resolution)
 # ---------------------------------------------------------------------------
-_TILE_THICK = "assets/sprites/ui/kenney_pixel_adventure/tiles/large/thick_outline"
-_TITLE_BG_IMG = "assets/sprites/ui/menu/main_title_bg.png"
-_BTN_BG_IMG = "assets/sprites/ui/menu/main_menu_btn_bg.png"
-_BG_VIDEO = "assets/backgrounds/Clouds.mp4"
-_FONT_TITLE = "assets/fonts/ThaleahFat.ttf"
-_FONT_BTN = "assets/fonts/Minecraft.ttf"
+_TITLE_W = 525
+_TITLE_H = 134
+_TITLE_X = (SCREEN_WIDTH - _TITLE_W) // 2
+_TITLE_Y = 44
 
-# ---------------------------------------------------------------------------
-# Layout (all in screen pixels, tuned to match mockup at 800x600)
-# ---------------------------------------------------------------------------
-_TITLE_PANEL_W = 520
-_TITLE_PANEL_Y = 45
-_TITLE_FONT_SIZE = 72
+_BTN_W = 259
+_BTN_H = 95
+_BTN_X = (SCREEN_WIDTH - _BTN_W) // 2
+_BTN_Y_START = 224
+_BTN_GAP = 16
+_BTN_FONT_SIZE = 42
 
-_BTN_W = 260
-_BTN_GAP = 14
-_BTN_FONT_SIZE = 28
-_BTN_TEXT_COLOR = (75, 42, 7)
-
-# ---------------------------------------------------------------------------
-# Title text colours (matching mockup: bright red body, white thin highlight,
-# dark maroon shadow/outline)
-# ---------------------------------------------------------------------------
-_TITLE_COLOR = (214, 48, 48)  # vivid red body
-_TITLE_SHADOW_COLOR = (90, 15, 15)  # dark maroon, 3 px offset
-_TITLE_HILIGHT_COLR = (255, 160, 160)  # pinkish-white inner highlight, -1 px offset
+_BTN_COLOR_NORMAL = (66, 19, 14)
+_BTN_COLOR_HOVER = (135, 36, 26)
 
 
 class MainMenu:
-    """Self-contained main-menu screen driven by the game loop."""
+    """Main-menu screen with stone buttons and cave background."""
 
     def __init__(self, screen: pygame.Surface) -> None:
         self._screen = screen
         self._next_state: GameState | None = None
+        self._selected_index: int = 0
 
         # ── background ────────────────────────────────────────────────────
-        self._bg = VideoBackground(_BG_VIDEO, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        self._bg: pygame.Surface
+        if os.path.exists(MAIN_MENU_BG_PATH):
+            raw_bg = pygame.image.load(MAIN_MENU_BG_PATH).convert()
+            if raw_bg.get_size() != (SCREEN_WIDTH, SCREEN_HEIGHT):
+                self._bg = pygame.transform.smoothscale(raw_bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
+            else:
+                self._bg = raw_bg
+        else:
+            self._bg = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            self._bg.fill((35, 25, 30))
+
+        # ── title banner ──────────────────────────────────────────────────
+        self._title_surf: pygame.Surface | None = None
+        self._title_rect = pygame.Rect(_TITLE_X, _TITLE_Y, _TITLE_W, _TITLE_H)
+        if os.path.exists(MAIN_TITLE_PATH):
+            raw_title = pygame.image.load(MAIN_TITLE_PATH).convert_alpha()
+            if raw_title.get_size() != (_TITLE_W, _TITLE_H):
+                self._title_surf = pygame.transform.smoothscale(raw_title, (_TITLE_W, _TITLE_H))
+            else:
+                self._title_surf = raw_title
 
         # ── fonts ─────────────────────────────────────────────────────────
-        self._title_font = pygame.font.Font(_FONT_TITLE, _TITLE_FONT_SIZE)
-        self._btn_font = pygame.font.Font(_FONT_BTN, _BTN_FONT_SIZE)
-
-        # ── title panel ───────────────────────────────────────────────────
-        self._title_bg: pygame.Surface | None = None
-        self._thick_panel: NineSlicePanel | None = None
-
-        if os.path.exists(_TITLE_BG_IMG):
-            raw_title = pygame.image.load(_TITLE_BG_IMG).convert_alpha()
-            t_bbox = raw_title.get_bounding_rect()
-            title_sub = (
-                raw_title.subsurface(t_bbox).copy()
-                if t_bbox.width > 0 and t_bbox.height > 0
-                else raw_title
-            )
-            tw = _TITLE_PANEL_W
-            th = int(tw * (title_sub.get_height() / title_sub.get_width()))
-            self._title_bg = pygame.transform.smoothscale(title_sub, (tw, th))
-            self._title_rect = pygame.Rect((SCREEN_WIDTH - tw) // 2, _TITLE_PANEL_Y, tw, th)
+        if os.path.exists(FONT_PRIMARY_PATH):
+            self._btn_font = pygame.font.Font(FONT_PRIMARY_PATH, _BTN_FONT_SIZE)
+        elif os.path.exists(FONT_SECONDARY_PATH):
+            self._btn_font = pygame.font.Font(FONT_SECONDARY_PATH, _BTN_FONT_SIZE)
         else:
-            self._thick_panel = NineSlicePanel(_TILE_THICK, scale=2)
-            self._title_rect = pygame.Rect((SCREEN_WIDTH - 560) // 2, 58, 560, 112)
+            self._btn_font = pygame.font.Font(None, _BTN_FONT_SIZE)
 
-        # Pre-render title text surfaces
-        self._title_shadow = self._title_font.render("BRICK BREAKER", True, _TITLE_SHADOW_COLOR)
-        self._title_surf = self._title_font.render("BRICK BREAKER", True, _TITLE_COLOR)
-        self._title_hilit = self._title_font.render("BRICK BREAKER", True, _TITLE_HILIGHT_COLR)
+        # ── button surface ────────────────────────────────────────────────
+        btn_bg_surf: pygame.Surface | None = None
+        if os.path.exists(MAIN_MENU_BTN_PATH):
+            raw_btn = pygame.image.load(MAIN_MENU_BTN_PATH).convert_alpha()
+            if raw_btn.get_size() != (_BTN_W, _BTN_H):
+                btn_bg_surf = pygame.transform.smoothscale(raw_btn, (_BTN_W, _BTN_H))
+            else:
+                btn_bg_surf = raw_btn
 
-        # ── button background ─────────────────────────────────────────────
-        raw_btn = pygame.image.load(_BTN_BG_IMG).convert_alpha()
-        b_bbox = raw_btn.get_bounding_rect()
-        btn_sub = (
-            raw_btn.subsurface(b_bbox).copy() if b_bbox.width > 0 and b_bbox.height > 0 else raw_btn
-        )
-
-        btn_w = _BTN_W
-        btn_h = int(btn_w * (btn_sub.get_height() / btn_sub.get_width()))
-        cx = (SCREEN_WIDTH - btn_w) // 2
-        start_y = self._title_rect.bottom + 40
+        # ── buttons ───────────────────────────────────────────────────────
+        button_defs: list[tuple[str, GameState]] = [
+            ("START", GameState.PLAYING),
+            ("SETTINGS", GameState.SETTINGS),
+            ("EXIT", GameState.QUIT),
+        ]
 
         self._buttons: list[tuple[MenuButton, GameState]] = []
-        for i, (label, state) in enumerate(
-            [
-                ("START", GameState.PLAYING),
-                ("SETTINGS", GameState.SETTINGS),
-                ("EXIT", GameState.QUIT),
-            ]
-        ):
+        for i, (label, state) in enumerate(button_defs):
             rect = pygame.Rect(
-                cx,
-                start_y + i * (btn_h + _BTN_GAP),
-                btn_w,
-                btn_h,
+                _BTN_X,
+                _BTN_Y_START + i * (_BTN_H + _BTN_GAP),
+                _BTN_W,
+                _BTN_H,
             )
             btn = MenuButton(
                 rect=rect,
                 label=label,
-                bg_surface=btn_sub,
+                bg_surface=btn_bg_surf,
                 font=self._btn_font,
-                text_color=_BTN_TEXT_COLOR,
+                text_color=_BTN_COLOR_NORMAL,
+                hover_text_color=_BTN_COLOR_HOVER,
             )
             self._buttons.append((btn, state))
 
@@ -152,28 +144,47 @@ class MainMenu:
     # ------------------------------------------------------------------
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
-        """Feed pygame events; triggers state change on button click."""
-        for btn, state in self._buttons:
+        """Process input events (mouse clicks and keyboard navigation)."""
+        # Mouse interactions
+        for i, (btn, state) in enumerate(self._buttons):
             if btn.update(events):
+                self._selected_index = i
                 self._next_state = state
 
+        # Keyboard fallback navigation
+        for ev in events:
+            if ev.type == pygame.KEYDOWN:
+                if ev.key in (pygame.K_UP, pygame.K_w):
+                    self._selected_index = (self._selected_index - 1) % len(self._buttons)
+                    self._update_keyboard_selection()
+                elif ev.key in (pygame.K_DOWN, pygame.K_s):
+                    self._selected_index = (self._selected_index + 1) % len(self._buttons)
+                    self._update_keyboard_selection()
+                elif ev.key in (pygame.K_RETURN, pygame.K_SPACE):
+                    _, state = self._buttons[self._selected_index]
+                    self._next_state = state
+                elif ev.key == pygame.K_ESCAPE:
+                    self._next_state = GameState.QUIT
+
+    def _update_keyboard_selection(self) -> None:
+        """Update hover state on buttons according to keyboard focus."""
+        for i, (btn, _) in enumerate(self._buttons):
+            btn._hovered = i == self._selected_index
+
     def update(self, dt: float) -> None:
-        """Advance background animation."""
-        self._bg.update(dt)
+        """Advance menu animations or state transitions."""
+        del dt  # Unused for static background frame
 
     def draw(self) -> None:
-        """Render all layers to the screen."""
-        # 1. Animated cloud background
-        self._bg.draw(self._screen)
+        """Render background, title banner, and buttons."""
+        # 1. Cave background frame
+        self._screen.blit(self._bg, (0, 0))
 
-        # 2. Title panel
-        if self._title_bg is not None:
-            self._screen.blit(self._title_bg, self._title_rect.topleft)
-        elif self._thick_panel is not None:
-            self._thick_panel.draw(self._screen, self._title_rect)
-        self._draw_title()
+        # 2. Title banner
+        if self._title_surf is not None:
+            self._screen.blit(self._title_surf, self._title_rect.topleft)
 
-        # 3. Buttons
+        # 3. Interactive stone buttons
         for btn, _ in self._buttons:
             btn.draw(self._screen)
 
@@ -181,23 +192,3 @@ class MainMenu:
     def next_state(self) -> GameState | None:
         """Next GameState requested by user interaction, or None."""
         return self._next_state
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
-    def _draw_title(self) -> None:
-        """Composite the title text with shadow and subtle highlight."""
-        cx, cy = self._title_rect.center
-
-        # Dark maroon shadow (+3, +3)
-        shadow_r = self._title_shadow.get_rect(center=(cx + 3, cy + 3))
-        self._screen.blit(self._title_shadow, shadow_r)
-
-        # Main red text
-        title_r = self._title_surf.get_rect(center=(cx, cy))
-        self._screen.blit(self._title_surf, title_r)
-
-        # Subtle pink highlight (-1, -2) -> upper-left inner glow effect
-        hilit_r = self._title_hilit.get_rect(center=(cx - 1, cy - 2))
-        self._screen.blit(self._title_hilit, hilit_r)

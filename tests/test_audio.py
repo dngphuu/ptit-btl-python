@@ -12,7 +12,7 @@ import pygame
 import pytest
 
 from src.config import MENU_BGM_PATH
-from src.core.audio import ensure_menu_bgm, fadeout_music, play_music, stop_music
+from src.core.audio import fadeout_music, play_music, stop_music
 from src.screens.main_menu import MainMenu
 
 
@@ -25,17 +25,6 @@ def setup_pygame():
     stop_music()
     pygame.mixer.quit()
     pygame.quit()
-
-
-def test_ensure_menu_bgm_returns_existing():
-    if os.path.exists(MENU_BGM_PATH):
-        res = ensure_menu_bgm(bgm_path=MENU_BGM_PATH)
-        assert res == MENU_BGM_PATH
-
-
-def test_ensure_menu_bgm_handles_missing_video():
-    res = ensure_menu_bgm(video_path="non_existent_video.mp4", bgm_path="temp_missing.ogg")
-    assert res == ""
 
 
 def test_play_and_stop_music():

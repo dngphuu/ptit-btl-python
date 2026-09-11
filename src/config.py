@@ -72,3 +72,12 @@ PADDLE_Y_OFFSET: int = 40  # distance from bottom of screen
 # ---------------------------------------------------------------------------
 MENU_BGM_PATH: str = "assets/audio/menu_bgm.ogg"
 MENU_BGM_VOLUME: float = 0.5
+
+# ---------------------------------------------------------------------------
+# Main menu / UI assets
+# ---------------------------------------------------------------------------
+MAIN_MENU_BG_PATH: str = "assets/backgrounds/main_menu_frame.png"
+MAIN_TITLE_PATH: str = "assets/sprites/ui/menu/main_title.png"
+MAIN_MENU_BTN_PATH: str = "assets/sprites/ui/menu/main_menu_btn_bg.png"
+FONT_PRIMARY_PATH: str = "assets/fonts/ThaleahFat.ttf"
+FONT_SECONDARY_PATH: str = "assets/fonts/Minecraft.ttf"
