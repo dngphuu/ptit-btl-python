@@ -95,3 +95,52 @@ HEART_SHEET_PATH: str = "assets/heart.png"
 GAME_EXIT_BTN_RECT: tuple[int, int, int, int] = (684, 20, 99, 99)
 GAME_PAUSE_BTN_RECT: tuple[int, int, int, int] = (20, 20, 99, 99)
 GAME_HUD_RECT: tuple[int, int, int, int] = (144, 46, 516, 136)
+
+# ---------------------------------------------------------------------------
+# Playfield container rectangle (inside the hieroglyph stone frame)
+# ---------------------------------------------------------------------------
+PLAYFIELD_X: int = 176
+PLAYFIELD_Y: int = 236
+PLAYFIELD_WIDTH: int = 448
+PLAYFIELD_HEIGHT: int = 340
+PLAYFIELD_RECT: tuple[int, int, int, int] = (
+    PLAYFIELD_X,
+    PLAYFIELD_Y,
+    PLAYFIELD_WIDTH,
+    PLAYFIELD_HEIGHT,
+)
+
+# ---------------------------------------------------------------------------
+# Brick assets (assets/sprites/tiles/bricks_export/ – edited transparent PNGs)
+# ---------------------------------------------------------------------------
+BRICKS_ASSET_DIR: str = "assets/sprites/tiles/bricks_export"
+
+# 6 active brick colours (grey was corrupted and removed)
+BRICK_COLORS: tuple[str, ...] = (
+    "red",  # 0
+    "orange",  # 1
+    "yellow",  # 2
+    "green",  # 3
+    "blue",  # 4
+    "purple",  # 5
+)
+
+# ---------------------------------------------------------------------------
+# Brick grid layout (precisely fitted inside the upper portion of playfield)
+# ---------------------------------------------------------------------------
+BRICK_GRID_COLS: int = 10  # 10 columns across the stone pool
+BRICK_GRID_ROWS: int = 9  # 9 rows matching the game mockup
+BRICK_HORIZONTAL_GAP: int = 2  # horizontal gap between bricks (px)
+BRICK_VERTICAL_GAP: int = 2  # vertical gap between bricks (px)
+BRICK_MARGIN_X: int = 14  # horizontal margin between playfield edge and bricks
+BRICK_MARGIN_TOP: int = 2  # top margin below the top stone beam
+BRICK_HEIGHT: int = 24  # nominal brick height (px)
+BRICK_MAX_HEIGHT_RATIO: float = 0.75  # brick wall occupies upper portion of playfield
+
+# Compatibility aliases
+BRICK_GAP_X: int = BRICK_HORIZONTAL_GAP
+BRICK_GAP_Y: int = BRICK_VERTICAL_GAP
+BRICK_H: int = BRICK_HEIGHT
+BRICK_W: int = 40
+BRICK_GRID_ORIGIN_X: int = PLAYFIELD_X + 15  # 191
+BRICK_GRID_ORIGIN_Y: int = PLAYFIELD_Y + BRICK_MARGIN_TOP  # 238

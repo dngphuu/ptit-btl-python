@@ -43,6 +43,7 @@ from src.config import (
 )
 from src.core.audio import play_music, stop_music
 from src.core.states import GameState
+from src.entities import Brick, BrickGrid, BrickRenderer, Playfield
 from src.ui.button import MenuButton
 
 # HUD styling
@@ -140,6 +141,19 @@ class GameplayScreen:
             self._heart_dim_surf = self._heart_surf.copy()
             self._heart_dim_surf.fill((120, 120, 120, 90), special_flags=pygame.BLEND_RGBA_MULT)
 
+        # ── Playfield & Brick Wall Architecture ───────────────────────────
+        self.playfield: Playfield = Playfield()
+        self.brick_grid: BrickGrid = BrickGrid(self.playfield)
+        self.brick_renderer: BrickRenderer = BrickRenderer()
+
+        from src.entities.debris import DebrisManager
+        self.debris_manager: DebrisManager = DebrisManager()
+
+    @property
+    def _bricks(self) -> list[Brick]:
+        """Convenience property for backward compatibility."""
+        return self.brick_grid.alive_bricks()
+
     # ------------------------------------------------------------------
     # State interface
     # ------------------------------------------------------------------
@@ -150,8 +164,9 @@ class GameplayScreen:
         return self._next_state
 
     def reset_state(self) -> None:
-        """Reset requested state transition."""
+        """Reset requested state transition and revive the brick grid."""
         self._next_state = None
+        self.brick_grid.reset()
 
     @property
     def is_paused(self) -> bool:
@@ -204,6 +219,8 @@ class GameplayScreen:
         del dt  # Core physics will consume dt in future task
         if self._is_paused:
             return
+        
+        self.debris_manager.update()
 
     def draw(self) -> None:
         """Render frame background, HUD panel contents, and UI buttons."""
@@ -213,7 +230,13 @@ class GameplayScreen:
         # 2. Top HUD banner text
         self._draw_hud()
 
-        # 3. Control buttons
+        # 3. Brick grid (drawn via BrickRenderer)
+        self.brick_renderer.render(self._screen, self.brick_grid)
+        
+        # 3.5. Debris effects
+        self.debris_manager.draw(self._screen)
+
+        # 4. Control buttons (drawn on top so they are always visible)
         self.exit_button.draw(self._screen)
         self.pause_button.draw(self._screen)
 
