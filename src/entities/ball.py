@@ -12,6 +12,8 @@ import pygame
 from src.entities.playfield import Playfield
 from src.entities.paddle import Paddle
 from src.entities.brick_grid import BrickGrid
+from src.core.audio import play_sfx
+from src.config import SFX_PADDLE_HIT_PATH, SFX_BRICK_HIT_PATH, SFX_BRICK_DESTROY_PATH
 
 class Ball:
     def __init__(self, playfield: Playfield, paddle: Paddle) -> None:
@@ -112,6 +114,7 @@ class Ball:
         if self.vy > 0 and self.rect.colliderect(self.paddle.rect):
             self.y = self.paddle.rect.top - self.radius
             bounced = True
+            play_sfx(SFX_PADDLE_HIT_PATH)
             
             # Bounce angle
             hit_pos = (self.x - self.paddle.rect.left) / self.paddle.width
@@ -142,8 +145,10 @@ class Ball:
                 destroyed = brick.hit()
                 if destroyed:
                     points_earned += int(50 * self.score_multiplier)
+                    play_sfx(SFX_BRICK_DESTROY_PATH)
                 else:
                     points_earned += int(10 * self.score_multiplier)
+                    play_sfx(SFX_BRICK_HIT_PATH)
                     
                 overlap_left = (self.x + self.radius) - brick.rect.left
                 overlap_right = brick.rect.right - (self.x - self.radius)
