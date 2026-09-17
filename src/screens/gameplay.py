@@ -41,7 +41,7 @@ from src.config import (
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
 )
-from src.core.audio import play_music, stop_music
+from src.core.audio import play_music, stop_music, play_sfx
 from src.core.states import GameState
 from src.entities import Brick, BrickGrid, BrickRenderer, Playfield, Paddle, Ball
 from src.ui.button import MenuButton
@@ -49,6 +49,7 @@ import cv2
 import numpy as np
 from src.vision.camera import CameraPipeline
 from src.vision.input_processor import InputProcessor
+from src.config import SFX_LEVEL_COMPLETE_PATH, SFX_LEVEL_FAIL_PATH
 
 # HUD styling
 _HUD_TEXT_COLOR = (66, 50, 45)
@@ -282,6 +283,25 @@ class GameplayScreen:
                 target_x = self.playfield.rect.x + landmark.x * self.playfield.rect.width
                 # Smoothly move or just snap. Let's snap for immediate response.
                 self.paddle.x = target_x
+                
+                # Check for closed hand gesture to launch ball
+                if not self.ball.active and landmark.raw_landmarks:
+                    lm = landmark.raw_landmarks
+                    def dist(p1, p2):
+                        return ((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)**0.5
+                    closed = True
+                    for mcp_idx, tip_idx in [(5, 8), (9, 12), (13, 16), (17, 20)]:
+                        if dist(lm[tip_idx], lm[0]) > dist(lm[mcp_idx], lm[0]):
+                            closed = False
+                            break
+                    if closed:
+                        import math
+                        self.ball.active = True
+                        self.ball.current_speed = self.ball.base_speed
+                        length = math.hypot(self.ball.vx, self.ball.vy)
+                        if length != 0:
+                            self.ball.vx = (self.ball.vx / length) * self.ball.current_speed
+                            self.ball.vy = (self.ball.vy / length) * self.ball.current_speed
             
             self.latest_frame = frame
             
@@ -300,6 +320,7 @@ class GameplayScreen:
             if self.score > self.high_score:
                 self.high_score = self.score
                 
+            play_sfx(SFX_LEVEL_COMPLETE_PATH)
             self.level += 1
             self.ball.set_difficulty(self.level)
             self.brick_grid.reset()
@@ -310,6 +331,7 @@ class GameplayScreen:
         if was_active and not self.ball.active:
             self.lives -= 1
             if self.lives <= 0:
+                play_sfx(SFX_LEVEL_FAIL_PATH)
                 self._save_high_score()
                 self._next_state = GameState.MAIN_MENU
                 self.reset_state()
@@ -325,9 +347,9 @@ class GameplayScreen:
         if self.latest_frame is not None:
             frame_rgb = cv2.cvtColor(self.latest_frame, cv2.COLOR_BGR2RGB)
             frame_surf = pygame.surfarray.make_surface(frame_rgb.swapaxes(0, 1))
-            cam_w, cam_h = 240, 180
+            cam_w, cam_h = 160, 120
             frame_surf = pygame.transform.smoothscale(frame_surf, (cam_w, cam_h))
-            self._screen.blit(frame_surf, (SCREEN_WIDTH - cam_w - 20, SCREEN_HEIGHT - cam_h - 20))
+            self._screen.blit(frame_surf, (SCREEN_WIDTH - cam_w - 20, 80))
 
         # 2. Top HUD banner text
         self._draw_hud()

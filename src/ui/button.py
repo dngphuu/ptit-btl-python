@@ -8,7 +8,8 @@ Supports rendering with a background surface or directly on pre-baked frames.
 from __future__ import annotations
 
 import pygame
-
+from src.core.audio import play_sfx
+from src.config import SFX_CLICK_PATH
 
 class MenuButton:
     """A rectangular button rendered with an optional stone background and centred text."""
@@ -81,6 +82,7 @@ class MenuButton:
                 pos = getattr(ev, "pos", mp)
                 if self._pressed and self.rect.collidepoint(pos):
                     clicked = True
+                    play_sfx(SFX_CLICK_PATH)
                 self._pressed = False
         return clicked
 

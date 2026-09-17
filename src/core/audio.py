@@ -47,3 +47,23 @@ def fadeout_music(ms: int = 500) -> None:
     """Fade out currently playing background music over *ms* milliseconds."""
     if pygame.mixer.get_init() and pygame.mixer.music.get_busy():
         pygame.mixer.music.fadeout(ms)
+
+_sfx_cache: dict[str, pygame.mixer.Sound] = {}
+
+def play_sfx(path: str, volume: float = 1.0) -> None:
+    """Load (and cache) and play a sound effect safely with Pygame mixer."""
+    if not pygame.mixer.get_init():
+        return
+
+    if not os.path.exists(path):
+        return
+
+    try:
+        if path not in _sfx_cache:
+            _sfx_cache[path] = pygame.mixer.Sound(path)
+        
+        sound = _sfx_cache[path]
+        sound.set_volume(volume)
+        sound.play()
+    except pygame.error as exc:
+        logger.warning("Failed to play sfx from %s: %s", path, exc)

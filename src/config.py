@@ -68,12 +68,18 @@ PADDLE_SPEED: int = 8  # pixels / frame (keyboard fallback)
 PADDLE_Y_OFFSET: int = 40  # distance from bottom of screen
 
 # ---------------------------------------------------------------------------
-# Audio / BGM
+# Audio / BGM / SFX
 # ---------------------------------------------------------------------------
-MENU_BGM_PATH: str = "assets/audio/menu_bgm.ogg"
+MENU_BGM_PATH: str = "assets/audio/main-menu-bgm.mp3"
 MENU_BGM_VOLUME: float = 0.5
-GAME_BGM_PATH: str = "assets/audio/game_bgm.ogg"
+GAME_BGM_PATH: str = "assets/audio/main-game-bgm.mp3"
 GAME_BGM_VOLUME: float = 0.5
+SFX_CLICK_PATH: str = "assets/audio/sfx_click.ogg"
+SFX_PADDLE_HIT_PATH: str = "assets/audio/sfx_paddle_hit.ogg"
+SFX_BRICK_HIT_PATH: str = "assets/audio/sfx_brick_hit.ogg"
+SFX_BRICK_DESTROY_PATH: str = "assets/audio/sfx_brick_destroy.ogg"
+SFX_LEVEL_COMPLETE_PATH: str = "assets/audio/sfx_level_complete.ogg"
+SFX_LEVEL_FAIL_PATH: str = "assets/audio/sfx_level_fail.ogg"
 
 # ---------------------------------------------------------------------------
 # Main menu / UI assets
