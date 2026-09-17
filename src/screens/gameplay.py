@@ -45,6 +45,10 @@ from src.core.audio import play_music, stop_music
 from src.core.states import GameState
 from src.entities import Brick, BrickGrid, BrickRenderer, Playfield, Paddle, Ball
 from src.ui.button import MenuButton
+import cv2
+import numpy as np
+from src.vision.camera import CameraPipeline
+from src.vision.input_processor import InputProcessor
 
 # HUD styling
 _HUD_TEXT_COLOR = (66, 50, 45)
@@ -155,6 +159,13 @@ class GameplayScreen:
         
         self.ball.set_difficulty(self.level)
 
+        # Vision pipeline
+        self.camera_pipeline = CameraPipeline()
+        self.input_processor = InputProcessor()
+        self.camera_pipeline.start()
+        self.latest_frame = None
+        self.landmark = None
+
     def _load_high_score(self) -> int:
         try:
             if os.path.exists("highscore.txt"):
@@ -259,6 +270,21 @@ class GameplayScreen:
             return
             
         keys = pygame.key.get_pressed()
+        
+        # Process vision input
+        frame = self.camera_pipeline.read()
+        if frame is not None:
+            landmark = self.input_processor.process(frame, flip_horizontal=False)
+            self.landmark = landmark
+            if landmark:
+                InputProcessor.draw_landmarks(frame, landmark)
+                # Map landmark x [0,1] to paddle x
+                target_x = self.playfield.rect.x + landmark.x * self.playfield.rect.width
+                # Smoothly move or just snap. Let's snap for immediate response.
+                self.paddle.x = target_x
+            
+            self.latest_frame = frame
+            
         self.paddle.update(keys, dt)
         
         was_active = self.ball.active
@@ -294,6 +320,14 @@ class GameplayScreen:
         """Render frame background, HUD panel contents, and UI buttons."""
         # 1. Background frame
         self._screen.blit(self._bg, (0, 0))
+        
+        # 1.5 Camera feed
+        if self.latest_frame is not None:
+            frame_rgb = cv2.cvtColor(self.latest_frame, cv2.COLOR_BGR2RGB)
+            frame_surf = pygame.surfarray.make_surface(frame_rgb.swapaxes(0, 1))
+            cam_w, cam_h = 240, 180
+            frame_surf = pygame.transform.smoothscale(frame_surf, (cam_w, cam_h))
+            self._screen.blit(frame_surf, (SCREEN_WIDTH - cam_w - 20, SCREEN_HEIGHT - cam_h - 20))
 
         # 2. Top HUD banner text
         self._draw_hud()
