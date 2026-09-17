@@ -43,7 +43,7 @@ from src.config import (
 )
 from src.core.audio import play_music, stop_music
 from src.core.states import GameState
-from src.entities import Brick, BrickGrid, BrickRenderer, Playfield
+from src.entities import Brick, BrickGrid, BrickRenderer, Playfield, Paddle, Ball
 from src.ui.button import MenuButton
 
 # HUD styling
@@ -62,8 +62,9 @@ class GameplayScreen:
 
         # Gameplay session values (ready for entity integration)
         self.score: int = 0
-        self.level_str: str = "1-1"
+        self.level: int = 1
         self.lives: int = 3
+        self.high_score: int = self._load_high_score()
 
         # ── Background Frame ──────────────────────────────────────────────
         self._bg: pygame.Surface
@@ -145,9 +146,30 @@ class GameplayScreen:
         self.playfield: Playfield = Playfield()
         self.brick_grid: BrickGrid = BrickGrid(self.playfield)
         self.brick_renderer: BrickRenderer = BrickRenderer()
+        
+        self.paddle: Paddle = Paddle(self.playfield)
+        self.ball: Ball = Ball(self.playfield, self.paddle)
 
         from src.entities.debris import DebrisManager
         self.debris_manager: DebrisManager = DebrisManager()
+        
+        self.ball.set_difficulty(self.level)
+
+    def _load_high_score(self) -> int:
+        try:
+            if os.path.exists("highscore.txt"):
+                with open("highscore.txt", "r") as f:
+                    return int(f.read().strip())
+        except Exception:
+            pass
+        return 0
+        
+    def _save_high_score(self) -> None:
+        try:
+            with open("highscore.txt", "w") as f:
+                f.write(str(self.high_score))
+        except Exception:
+            pass
 
     @property
     def _bricks(self) -> list[Brick]:
@@ -167,6 +189,12 @@ class GameplayScreen:
         """Reset requested state transition and revive the brick grid."""
         self._next_state = None
         self.brick_grid.reset()
+        self.score = 0
+        self.level = 1
+        self.lives = 3
+        self.paddle.x = self.playfield.center_x
+        self.ball.set_difficulty(self.level)
+        self.ball.reset()
 
     @property
     def is_paused(self) -> bool:
@@ -176,6 +204,11 @@ class GameplayScreen:
     def toggle_pause(self) -> None:
         """Toggle pause state."""
         self._is_paused = not self._is_paused
+        if pygame.mixer.get_init():
+            if self._is_paused:
+                pygame.mixer.music.pause()
+            else:
+                pygame.mixer.music.unpause()
 
     # ------------------------------------------------------------------
     # Audio interface
@@ -200,6 +233,9 @@ class GameplayScreen:
         """Process input events for the gameplay screen."""
         # Exit button click -> return to main menu
         if self.exit_button.update(events):
+            self._save_high_score()
+            if self._is_paused:
+                self.toggle_pause()
             self._next_state = GameState.MAIN_MENU
 
         # Pause button click -> toggle pause
@@ -210,16 +246,48 @@ class GameplayScreen:
         for ev in events:
             if ev.type == pygame.KEYDOWN:
                 if ev.key == pygame.K_ESCAPE:
+                    self._save_high_score()
+                    if self._is_paused:
+                        self.toggle_pause()
                     self._next_state = GameState.MAIN_MENU
                 elif ev.key == pygame.K_p:
                     self.toggle_pause()
 
     def update(self, dt: float) -> None:
         """Advance gameplay logic and animations."""
-        del dt  # Core physics will consume dt in future task
         if self._is_paused:
             return
+            
+        keys = pygame.key.get_pressed()
+        self.paddle.update(keys, dt)
         
+        was_active = self.ball.active
+        points_earned = self.ball.update(dt, keys, self.brick_grid)
+        self.score += points_earned
+        
+        if self.score > self.high_score:
+            self.high_score = self.score
+        
+        # Check level complete
+        if len(self.brick_grid.alive_bricks()) == 0:
+            self.score += int(500 * self.ball.score_multiplier)  # Level clear bonus
+            if self.score > self.high_score:
+                self.high_score = self.score
+                
+            self.level += 1
+            self.ball.set_difficulty(self.level)
+            self.brick_grid.reset()
+            self.paddle.x = self.playfield.center_x
+            self.ball.reset()
+        
+        # Check if ball fell out (it becomes inactive after falling out)
+        if was_active and not self.ball.active:
+            self.lives -= 1
+            if self.lives <= 0:
+                self._save_high_score()
+                self._next_state = GameState.MAIN_MENU
+                self.reset_state()
+                
         self.debris_manager.update()
 
     def draw(self) -> None:
@@ -233,12 +301,42 @@ class GameplayScreen:
         # 3. Brick grid (drawn via BrickRenderer)
         self.brick_renderer.render(self._screen, self.brick_grid)
         
+        # 3.2. Paddle and Ball
+        self.paddle.draw(self._screen)
+        self.ball.draw(self._screen)
+        
         # 3.5. Debris effects
         self.debris_manager.draw(self._screen)
 
         # 4. Control buttons (drawn on top so they are always visible)
         self.exit_button.draw(self._screen)
         self.pause_button.draw(self._screen)
+
+        if self._is_paused:
+            self._draw_pause_overlay()
+
+    def _draw_pause_overlay(self) -> None:
+        """Render a dimming overlay and 'PAUSED' text."""
+        overlay = pygame.Surface(self._screen.get_size(), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))
+        self._screen.blit(overlay, (0, 0))
+
+        # Use the same font path as the HUD but larger
+        font_path = None
+        if os.path.exists(FONT_SECONDARY_PATH):
+            font_path = FONT_SECONDARY_PATH
+        elif os.path.exists(FONT_PRIMARY_PATH):
+            font_path = FONT_PRIMARY_PATH
+
+        font = pygame.font.Font(font_path, 72)
+        text = font.render("PAUSED", True, (255, 255, 255))
+        text_rect = text.get_rect(center=(self._screen.get_width() // 2, self._screen.get_height() // 2 - 30))
+        self._screen.blit(text, text_rect)
+
+        small_font = pygame.font.Font(font_path, 24)
+        sub_text = small_font.render("Press P or PAUSE button to resume", True, (200, 200, 200))
+        sub_text_rect = sub_text.get_rect(center=(self._screen.get_width() // 2, self._screen.get_height() // 2 + 30))
+        self._screen.blit(sub_text, sub_text_rect)
 
     def _draw_hud(self) -> None:
         """Render Score, Level, and Lives into the top stone HUD banner."""
@@ -252,9 +350,9 @@ class GameplayScreen:
         self._screen.blit(lbl_score, lbl_score.get_rect(center=(score_x, center_y - 18)))
         self._screen.blit(val_score, val_score.get_rect(center=(score_x, center_y + 14)))
 
-        # 2. LEVEL
-        lbl_level = self._hud_lbl_font.render("LEVEL", True, _HUD_TEXT_COLOR)
-        val_level = self._hud_val_font.render(self.level_str, True, _HUD_TEXT_COLOR)
+        # 2. HI-SCORE
+        lbl_level = self._hud_lbl_font.render("HI-SCORE", True, _HUD_TEXT_COLOR)
+        val_level = self._hud_val_font.render(f"{self.high_score:05d}", True, _HUD_TEXT_COLOR)
         level_x = hud_x + int(hud_w * 0.50)
         self._screen.blit(lbl_level, lbl_level.get_rect(center=(level_x, center_y - 18)))
         self._screen.blit(val_level, val_level.get_rect(center=(level_x, center_y + 14)))
@@ -269,16 +367,16 @@ class GameplayScreen:
             and self._heart_dim_surf is not None
             and 0 <= self.lives <= 5
         ):
-            # Render a row of hearts: filled for remaining lives, dimmed for lost lives
+            # Render a row of hearts: filled for remaining lives, hidden for lost lives
             gap = 6
             heart_w = self._heart_surf.get_width()
             total_w = self.max_lives * heart_w + (self.max_lives - 1) * gap
             start_x = lives_x - total_w // 2
             for i in range(self.max_lives):
-                hx = start_x + i * (heart_w + gap)
-                hy = center_y
-                surf = self._heart_surf if i < self.lives else self._heart_dim_surf
-                self._screen.blit(surf, (hx, hy))
+                if i < self.lives:
+                    hx = start_x + i * (heart_w + gap)
+                    hy = center_y
+                    self._screen.blit(self._heart_surf, (hx, hy))
         elif self._heart_surf is not None and self.lives > 5:
             # Fallback for extra high lives count: [heart] x{lives}
             val_lives = self._hud_val_font.render(f"x{self.lives}", True, _HUD_TEXT_COLOR)

@@ -75,6 +75,18 @@ class Playfield:
     def center_y(self) -> float:
         return self.y + self.height / 2.0
 
+    def get_left_edge(self, y: float) -> float:
+        """Returns the actual left boundary at a given Y coordinate (slanted walls)."""
+        # Linear approximation of the left stone pillar:
+        # At y=240, x=205. At y=590, x=124. dx/dy = -0.231
+        return 205 - 0.231 * (y - 240)
+
+    def get_right_edge(self, y: float) -> float:
+        """Returns the actual right boundary at a given Y coordinate (slanted walls)."""
+        # Linear approximation of the right stone pillar:
+        # At y=240, x=596. At y=590, x=674. dx/dy = 0.223
+        return 596 + 0.223 * (y - 240)
+
     def set_bounds(self, x: float, y: float, width: float, height: float) -> None:
         """Update playfield coordinates (e.g. on window resize or canvas change)."""
         self.x = float(x)
