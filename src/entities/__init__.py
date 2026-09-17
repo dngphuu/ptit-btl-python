@@ -12,6 +12,8 @@ from src.entities.brick import Brick
 from src.entities.brick_grid import BrickGrid
 from src.entities.brick_renderer import BrickRenderer
 from src.entities.playfield import Playfield
+from src.entities.paddle import Paddle
+from src.entities.ball import Ball
 
 
 def build_brick_grid(
@@ -31,4 +33,6 @@ __all__ = [
     "BrickRenderer",
     "Playfield",
     "build_brick_grid",
+    "Paddle",
+    "Ball",
 ]

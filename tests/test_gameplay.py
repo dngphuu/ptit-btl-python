@@ -32,7 +32,7 @@ def test_gameplay_init_and_draw():
     assert gameplay.next_state is None
     assert not gameplay.is_paused
     assert gameplay.score == 0
-    assert gameplay.level_str == "1-1"
+    assert gameplay.level == 1
     assert gameplay.lives == 3
 
     # Test update and draw without errors

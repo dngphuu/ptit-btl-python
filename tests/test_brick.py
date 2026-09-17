@@ -152,7 +152,6 @@ def test_brick_grid_formula_and_centering():
         margin_x=margin_x,
         margin_top=margin_top,
         brick_height=16,
-        max_height_ratio=0.55,
     )
 
     # Expected formula (trapezoidal perspective):

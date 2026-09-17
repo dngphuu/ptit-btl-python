@@ -134,8 +134,8 @@ BRICK_HORIZONTAL_GAP: int = 2  # horizontal gap between bricks (px)
 BRICK_VERTICAL_GAP: int = 2  # vertical gap between bricks (px)
 BRICK_MARGIN_X: int = 14  # horizontal margin between playfield edge and bricks
 BRICK_MARGIN_TOP: int = 2  # top margin below the top stone beam
-BRICK_HEIGHT: int = 24  # nominal brick height (px)
-BRICK_MAX_HEIGHT_RATIO: float = 0.75  # brick wall occupies upper portion of playfield
+BRICK_HEIGHT: int = 16  # nominal brick height (px)
+BRICK_MAX_HEIGHT_RATIO: float = 0.55  # brick wall occupies upper portion of playfield
 
 # Compatibility aliases
 BRICK_GAP_X: int = BRICK_HORIZONTAL_GAP
