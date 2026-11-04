@@ -23,8 +23,8 @@
 > **Môn học:** Lập trình với Python (Python Programming)  
 > **Đề tài:** *VisionBrick – Tích hợp Thị giác máy tính vào trò chơi Brick Breaker cổ điển*  
 > **Sinh viên thực hiện:**
-> - **Đặng Gia Phú** (B21DCCN588)
-> - **Nguyễn Tiến Dũng** (B21DCCN234)
+> - **Đặng Gia Phú** (B24DCKH100)
+> - **Nguyễn Tiến Dũng** (B24DCKH038)
 
 ---
 
