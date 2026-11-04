@@ -1,0 +1,62 @@
+"""
+src/core/settings.py
+====================
+Persistent game settings (audio volumes, control mode).
+"""
+
+from __future__ import annotations
+
+import json
+import os
+
+_SETTINGS_FILE = "settings.json"
+
+
+class GameSettings:
+    """Global mutable settings, persisted to disk as JSON."""
+
+    music_volume: float = 0.5   # 0.0 – 1.0
+    sfx_volume: float = 1.0     # 0.0 – 1.0
+    control_mode: str = "gesture"  # "keyboard" | "gesture"
+
+    # Convenience read-only helpers
+    @classmethod
+    def is_music_on(cls) -> bool:
+        return cls.music_volume > 0.0
+
+    @classmethod
+    def is_sfx_on(cls) -> bool:
+        return cls.sfx_volume > 0.0
+
+    # ── persistence ───────────────────────────────────────────────────────
+
+    @classmethod
+    def load(cls) -> None:
+        try:
+            if os.path.exists(_SETTINGS_FILE):
+                with open(_SETTINGS_FILE, "r") as f:
+                    data = json.load(f)
+                cls.music_volume = float(data.get("music_volume", 0.5))
+                cls.sfx_volume = float(data.get("sfx_volume", 1.0))
+                cls.control_mode = data.get("control_mode", "gesture")
+        except Exception:
+            pass
+
+    @classmethod
+    def save(cls) -> None:
+        try:
+            with open(_SETTINGS_FILE, "w") as f:
+                json.dump(
+                    {
+                        "music_volume": round(cls.music_volume, 2),
+                        "sfx_volume": round(cls.sfx_volume, 2),
+                        "control_mode": cls.control_mode,
+                    },
+                    f,
+                )
+        except Exception:
+            pass
+
+
+# Load at import time so every module sees the saved values immediately.
+GameSettings.load()
