@@ -8,8 +8,10 @@ Supports rendering with a background surface or directly on pre-baked frames.
 from __future__ import annotations
 
 import pygame
-from src.core.audio import play_sfx
+
 from src.config import SFX_CLICK_PATH
+from src.core.audio import play_sfx
+
 
 class MenuButton:
     """A rectangular button rendered with an optional stone background and centred text."""

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import random
+
 import pygame
+
 
 class Debris:
     """Tumbling debris chunk representing a destroyed brick."""
+
     def __init__(self, x: float, y: float, sprite: pygame.Surface) -> None:
         self.x = x
         self.y = y
@@ -13,7 +16,7 @@ class Debris:
         self.gravity = 0.2
         self.sprite = sprite.copy()
         self.alpha = 255.0
-        self.fade_rate = 255.0 / (0.6 * 60) # 0.6s at 60fps
+        self.fade_rate = 255.0 / (0.6 * 60)  # 0.6s at 60fps
         self.rotation = 0.0
         self.rot_speed = random.uniform(-5, 5)
 
@@ -35,6 +38,7 @@ class Debris:
 
 class PixelParticle:
     """Small pixel particles emitted upon brick destruction."""
+
     def __init__(self, x: float, y: float, color: tuple[int, int, int]) -> None:
         self.x = x
         self.y = y
@@ -44,7 +48,7 @@ class PixelParticle:
         self.color = color
         self.alpha = 255.0
         self.fade_rate = 255.0 / (0.6 * 60)
-        
+
     def update(self) -> None:
         self.x += self.vx
         self.y += self.vy
@@ -61,11 +65,14 @@ class PixelParticle:
 
 class DebrisManager:
     """Manages tumbling debris and pixel particles for destroyed bricks."""
+
     def __init__(self) -> None:
         self.debris: list[Debris] = []
         self.particles: list[PixelParticle] = []
 
-    def spawn(self, x: float, y: float, sprite: pygame.Surface, color: tuple[int, int, int]) -> None:
+    def spawn(
+        self, x: float, y: float, sprite: pygame.Surface, color: tuple[int, int, int]
+    ) -> None:
         self.debris.append(Debris(x, y, sprite))
         for _ in range(random.randint(5, 10)):
             self.particles.append(PixelParticle(x, y, color))
@@ -75,7 +82,7 @@ class DebrisManager:
             d.update()
         for p in self.particles:
             p.update()
-            
+
         self.debris = [d for d in self.debris if d.alpha > 0]
         self.particles = [p for p in self.particles if p.alpha > 0]
 

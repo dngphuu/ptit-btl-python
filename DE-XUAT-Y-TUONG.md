@@ -92,6 +92,7 @@ $$
 ```python
 import numpy as np
 
+
 def process_paddle_position(landmark_x, prev_x, screen_width, alpha=0.3):
     raw_x = np.interp(landmark_x, [0.2, 0.8], [0, screen_width])
     smoothed_x = alpha * raw_x + (1 - alpha) * prev_x

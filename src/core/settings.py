@@ -9,14 +9,16 @@ from __future__ import annotations
 import json
 import os
 
-_SETTINGS_FILE = "settings.json"
+from src.config import user_data_path
+
+_SETTINGS_FILE = user_data_path("settings.json")
 
 
 class GameSettings:
     """Global mutable settings, persisted to disk as JSON."""
 
-    music_volume: float = 0.5   # 0.0 – 1.0
-    sfx_volume: float = 1.0     # 0.0 – 1.0
+    music_volume: float = 0.5  # 0.0 – 1.0
+    sfx_volume: float = 1.0  # 0.0 – 1.0
     control_mode: str = "gesture"  # "keyboard" | "gesture"
 
     # Convenience read-only helpers

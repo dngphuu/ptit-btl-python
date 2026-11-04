@@ -1,6 +1,6 @@
 [project]
 name = "ptit-btl-python"
-version = "0.1.0"
+version = "1.0.0"
 description = "VisionBrick – Hand-Tracked Brick Breaker with MediaPipe"
 requires-python = ">=3.10"
 dependencies = [
@@ -15,6 +15,7 @@ dev = [
     "pytest>=8.0",
     "pytest-timeout>=2.3",
     "ruff>=0.4",
+    "pyinstaller>=6.10",
 ]
 
 [build-system]
@@ -40,4 +41,5 @@ dev = [
     "pytest>=9.1.1",
     "pytest-timeout>=2.4.0",
     "ruff>=0.16.6",
+    "pyinstaller>=6.10.0",
 ]

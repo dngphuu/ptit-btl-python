@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import os
 
+import cv2
 import pygame
 
 from src.config import (
@@ -40,17 +41,19 @@ from src.config import (
     MAIN_GAME_BG_PATH,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
+    SFX_LEVEL_COMPLETE_PATH,
+    SFX_LEVEL_FAIL_PATH,
+    user_data_path,
 )
-from src.core.audio import play_music, stop_music, play_sfx
+from src.core.audio import play_music, play_sfx, stop_music
 from src.core.settings import GameSettings
 from src.core.states import GameState
-from src.entities import Brick, BrickGrid, BrickRenderer, Playfield, Paddle, Ball
+from src.entities import Ball, Brick, BrickGrid, BrickRenderer, Paddle, Playfield
 from src.ui.button import MenuButton
-import cv2
-import numpy as np
 from src.vision.camera import CameraPipeline
 from src.vision.input_processor import InputProcessor
-from src.config import SFX_LEVEL_COMPLETE_PATH, SFX_LEVEL_FAIL_PATH
+
+_HIGHSCORE_FILE = user_data_path("highscore.txt")
 
 # HUD styling
 _HUD_TEXT_COLOR = (66, 50, 45)
@@ -152,13 +155,14 @@ class GameplayScreen:
         self.playfield: Playfield = Playfield()
         self.brick_grid: BrickGrid = BrickGrid(self.playfield)
         self.brick_renderer: BrickRenderer = BrickRenderer()
-        
+
         self.paddle: Paddle = Paddle(self.playfield)
         self.ball: Ball = Ball(self.playfield, self.paddle)
 
         from src.entities.debris import DebrisManager
+
         self.debris_manager: DebrisManager = DebrisManager()
-        
+
         self.ball.set_difficulty(self.level)
 
         # Vision pipeline
@@ -170,16 +174,16 @@ class GameplayScreen:
 
     def _load_high_score(self) -> int:
         try:
-            if os.path.exists("highscore.txt"):
-                with open("highscore.txt", "r") as f:
+            if os.path.exists(_HIGHSCORE_FILE):
+                with open(_HIGHSCORE_FILE, "r") as f:
                     return int(f.read().strip())
         except Exception:
             pass
         return 0
-        
+
     def _save_high_score(self) -> None:
         try:
-            with open("highscore.txt", "w") as f:
+            with open(_HIGHSCORE_FILE, "w") as f:
                 f.write(str(self.high_score))
         except Exception:
             pass
@@ -270,9 +274,9 @@ class GameplayScreen:
         """Advance gameplay logic and animations."""
         if self._is_paused:
             return
-            
+
         keys = pygame.key.get_pressed()
-        
+
         # Process vision input (when gesture control is enabled)
         if GameSettings.is_gesture_on():
             frame = self.camera_pipeline.read()
@@ -284,12 +288,14 @@ class GameplayScreen:
                     # Map landmark x [0,1] to paddle x
                     target_x = self.playfield.rect.x + landmark.x * self.playfield.rect.width
                     self.paddle.x = target_x
-                    
+
                     # Check for closed hand gesture to launch ball
                     if not self.ball.active and landmark.raw_landmarks:
                         lm = landmark.raw_landmarks
+
                         def dist(p1, p2):
-                            return ((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)**0.5
+                            return ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5
+
                         closed = True
                         for mcp_idx, tip_idx in [(5, 8), (9, 12), (13, 16), (17, 20)]:
                             if dist(lm[tip_idx], lm[0]) > dist(lm[mcp_idx], lm[0]):
@@ -297,6 +303,7 @@ class GameplayScreen:
                                 break
                         if closed:
                             import math
+
                             self.ball.active = True
                             self.ball.current_speed = self.ball.base_speed
                             length = math.hypot(self.ball.vx, self.ball.vy)
@@ -307,29 +314,29 @@ class GameplayScreen:
         else:
             self.landmark = None
             self.latest_frame = None
-            
+
         self.paddle.update(keys, dt)
-        
+
         was_active = self.ball.active
         points_earned = self.ball.update(dt, keys, self.brick_grid)
         self.score += points_earned
-        
+
         if self.score > self.high_score:
             self.high_score = self.score
-        
+
         # Check level complete
         if len(self.brick_grid.alive_bricks()) == 0:
             self.score += int(500 * self.ball.score_multiplier)  # Level clear bonus
             if self.score > self.high_score:
                 self.high_score = self.score
-                
+
             play_sfx(SFX_LEVEL_COMPLETE_PATH)
             self.level += 1
             self.ball.set_difficulty(self.level)
             self.brick_grid.reset()
             self.paddle.x = self.playfield.center_x
             self.ball.reset()
-        
+
         # Check if ball fell out (it becomes inactive after falling out)
         if was_active and not self.ball.active:
             self.lives -= 1
@@ -338,14 +345,14 @@ class GameplayScreen:
                 self._save_high_score()
                 self._next_state = GameState.MAIN_MENU
                 self.reset_state()
-                
+
         self.debris_manager.update()
 
     def draw(self) -> None:
         """Render frame background, HUD panel contents, and UI buttons."""
         # 1. Background frame
         self._screen.blit(self._bg, (0, 0))
-        
+
         # 1.5 Camera feed
         if self.latest_frame is not None:
             frame_rgb = cv2.cvtColor(self.latest_frame, cv2.COLOR_BGR2RGB)
@@ -359,11 +366,11 @@ class GameplayScreen:
 
         # 3. Brick grid (drawn via BrickRenderer)
         self.brick_renderer.render(self._screen, self.brick_grid)
-        
+
         # 3.2. Paddle and Ball
         self.paddle.draw(self._screen)
         self.ball.draw(self._screen)
-        
+
         # 3.5. Debris effects
         self.debris_manager.draw(self._screen)
 
@@ -389,12 +396,16 @@ class GameplayScreen:
 
         font = pygame.font.Font(font_path, 72)
         text = font.render("PAUSED", True, (255, 255, 255))
-        text_rect = text.get_rect(center=(self._screen.get_width() // 2, self._screen.get_height() // 2 - 30))
+        text_rect = text.get_rect(
+            center=(self._screen.get_width() // 2, self._screen.get_height() // 2 - 30)
+        )
         self._screen.blit(text, text_rect)
 
         small_font = pygame.font.Font(font_path, 24)
         sub_text = small_font.render("Press P or PAUSE button to resume", True, (200, 200, 200))
-        sub_text_rect = sub_text.get_rect(center=(self._screen.get_width() // 2, self._screen.get_height() // 2 + 30))
+        sub_text_rect = sub_text.get_rect(
+            center=(self._screen.get_width() // 2, self._screen.get_height() // 2 + 30)
+        )
         self._screen.blit(sub_text, sub_text_rect)
 
     def _draw_hud(self) -> None:

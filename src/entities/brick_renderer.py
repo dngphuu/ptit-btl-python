@@ -63,9 +63,7 @@ class BrickRenderer:
                     trimmed = raw.subsurface(bbox).copy()
                     self._raw_sprites[(color, hp)] = trimmed
 
-    def get_brick_surface(
-        self, color: str, hp: int, target_width: int
-    ) -> pygame.Surface | None:
+    def get_brick_surface(self, color: str, hp: int, target_width: int) -> pygame.Surface | None:
         """Return a cached, pre-scaled surface for a brick of the given color and width.
         Height is scaled proportionally to maintain the 2.5D aspect ratio.
         """
@@ -132,4 +130,9 @@ class BrickRenderer:
             pygame.draw.rect(surface, (25, 15, 20), rect, 1)
             # Inner top/left highlight
             if w > 4 and h > 4:
-                pygame.draw.line(surface, (255, 255, 255, 80), (draw_x + 1, draw_y + 1), (draw_x + w - 2, draw_y + 1))
+                pygame.draw.line(
+                    surface,
+                    (255, 255, 255, 80),
+                    (draw_x + 1, draw_y + 1),
+                    (draw_x + w - 2, draw_y + 1),
+                )

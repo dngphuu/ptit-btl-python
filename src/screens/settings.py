@@ -24,6 +24,7 @@ from src.config import (
     MAIN_MENU_BG_PATH,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
+    SETTINGS_UI_DIR,
     SFX_CLICK_PATH,
 )
 from src.core.audio import play_sfx, set_music_volume
@@ -33,7 +34,7 @@ from src.core.states import GameState
 # ---------------------------------------------------------------------------
 # Asset paths
 # ---------------------------------------------------------------------------
-_SETTINGS_UI_DIR = "assets/sprites/ui/settings"
+_SETTINGS_UI_DIR = SETTINGS_UI_DIR
 _BASE_BG_PATH = os.path.join(_SETTINGS_UI_DIR, "settings_menu_base.png")
 _BTN_TOGGLE_ON_PATH = os.path.join(_SETTINGS_UI_DIR, "btn_toggle_on.png")
 _BTN_TOGGLE_OFF_PATH = os.path.join(_SETTINGS_UI_DIR, "btn_toggle_off.png")
@@ -258,9 +259,7 @@ class VolumeSlider:
             self._last_unmuted_volume = self.value
             self.set_value(0.0, play_sound=True)
         else:
-            restore_vol = (
-                self._last_unmuted_volume if self._last_unmuted_volume > 0.0 else 0.5
-            )
+            restore_vol = self._last_unmuted_volume if self._last_unmuted_volume > 0.0 else 0.5
             self.set_value(restore_vol, play_sound=True)
 
     @property
@@ -405,21 +404,15 @@ class SettingsMenu:
         )
         if self._base_surf is None:
             # Fallback to main menu cave bg if custom base doesn't exist
-            self._base_surf = _load_image(
-                MAIN_MENU_BG_PATH, (SCREEN_WIDTH, SCREEN_HEIGHT)
-            )
+            self._base_surf = _load_image(MAIN_MENU_BG_PATH, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
         # ── Toggle Button Sprites ─────────────────────────────────────────
-        toggle_on_surf = _load_image(
-            _BTN_TOGGLE_ON_PATH, (_TOGGLE_RECT.width, _TOGGLE_RECT.height)
-        )
+        toggle_on_surf = _load_image(_BTN_TOGGLE_ON_PATH, (_TOGGLE_RECT.width, _TOGGLE_RECT.height))
         toggle_off_surf = _load_image(
             _BTN_TOGGLE_OFF_PATH, (_TOGGLE_RECT.width, _TOGGLE_RECT.height)
         )
 
-        self._toggle_btn = GestureToggleButton(
-            _TOGGLE_RECT, toggle_on_surf, toggle_off_surf
-        )
+        self._toggle_btn = GestureToggleButton(_TOGGLE_RECT, toggle_on_surf, toggle_off_surf)
 
         # ── Volume Slider Sprites ─────────────────────────────────────────
         knob_surf = _load_image(_SLIDER_KNOB_PATH)

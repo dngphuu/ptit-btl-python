@@ -5,6 +5,49 @@ Global constants for VisionBrick.  All tunable parameters live here so that
 no magic numbers appear elsewhere in the codebase.
 """
 
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+
+def get_base_dir() -> Path:
+    """Return base directory for bundled static assets.
+
+    Supports:
+    - Normal script execution (repo root)
+    - PyInstaller bundled executable (sys._MEIPASS)
+    """
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS)
+    return Path(__file__).resolve().parent.parent
+
+
+BASE_DIR: Path = get_base_dir()
+
+
+def resource_path(relative_path: str) -> str:
+    """Return the resolved absolute path to a bundled asset."""
+    target = BASE_DIR / relative_path
+    if not target.exists() and getattr(sys, "frozen", False):
+        fallback = Path(sys.executable).parent / relative_path
+        if fallback.exists():
+            return str(fallback)
+    return str(target)
+
+
+def get_user_data_dir() -> Path:
+    """Return directory for persistent user data (settings, highscore)."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).resolve().parent.parent
+
+
+def user_data_path(filename: str) -> str:
+    """Return path for user-writable persistent files."""
+    return str(get_user_data_dir() / filename)
+
+
 # ---------------------------------------------------------------------------
 # Display
 # ---------------------------------------------------------------------------
@@ -41,13 +84,13 @@ MP_MIN_PRESENCE_CONFIDENCE: float = 0.5
 # Path to the hand_landmarker.task bundle (relative to repo root).
 # Download via: https://storage.googleapis.com/mediapipe-models/hand_landmarker/
 #               hand_landmarker/float16/latest/hand_landmarker.task
-MP_MODEL_PATH: str = "models/hand_landmarker.task"
+MP_MODEL_PATH: str = resource_path("models/hand_landmarker.task")
 
 # The landmark index used for paddle control (index-finger MCP = 5).
 HAND_LANDMARK_INDEX: int = 5
 
 # ---------------------------------------------------------------------------
-# Coordinate mapping  (camera X → screen X)
+# Coordinate mapping  (camera X -> screen X)
 # ---------------------------------------------------------------------------
 # Normalised camera X range that maps to [0, SCREEN_WIDTH].
 # Values outside this window are clamped.
@@ -70,34 +113,36 @@ PADDLE_Y_OFFSET: int = 40  # distance from bottom of screen
 # ---------------------------------------------------------------------------
 # Audio / BGM / SFX
 # ---------------------------------------------------------------------------
-MENU_BGM_PATH: str = "assets/audio/main-menu-bgm.mp3"
+MENU_BGM_PATH: str = resource_path("assets/audio/main-menu-bgm.mp3")
 MENU_BGM_VOLUME: float = 0.5
-GAME_BGM_PATH: str = "assets/audio/main-game-bgm.mp3"
+GAME_BGM_PATH: str = resource_path("assets/audio/main-game-bgm.mp3")
 GAME_BGM_VOLUME: float = 0.5
-SFX_CLICK_PATH: str = "assets/audio/sfx_click.ogg"
-SFX_PADDLE_HIT_PATH: str = "assets/audio/sfx_paddle_hit.ogg"
-SFX_BRICK_HIT_PATH: str = "assets/audio/sfx_brick_hit.ogg"
-SFX_BRICK_DESTROY_PATH: str = "assets/audio/sfx_brick_destroy.ogg"
-SFX_LEVEL_COMPLETE_PATH: str = "assets/audio/sfx_level_complete.ogg"
-SFX_LEVEL_FAIL_PATH: str = "assets/audio/sfx_level_fail.ogg"
+SFX_CLICK_PATH: str = resource_path("assets/audio/sfx_click.ogg")
+SFX_PADDLE_HIT_PATH: str = resource_path("assets/audio/sfx_paddle_hit.ogg")
+SFX_BRICK_HIT_PATH: str = resource_path("assets/audio/sfx_brick_hit.ogg")
+SFX_BRICK_DESTROY_PATH: str = resource_path("assets/audio/sfx_brick_destroy.ogg")
+SFX_LEVEL_COMPLETE_PATH: str = resource_path("assets/audio/sfx_level_complete.ogg")
+SFX_LEVEL_FAIL_PATH: str = resource_path("assets/audio/sfx_level_fail.ogg")
 
 # ---------------------------------------------------------------------------
 # Main menu / UI assets
 # ---------------------------------------------------------------------------
-MAIN_MENU_BG_PATH: str = "assets/backgrounds/main_menu_frame.png"
-MAIN_TITLE_PATH: str = "assets/sprites/ui/menu/main_title.png"
-MAIN_MENU_BTN_PATH: str = "assets/sprites/ui/menu/main_menu_btn_bg.png"
-FONT_PRIMARY_PATH: str = "assets/fonts/ThaleahFat.ttf"
-FONT_SECONDARY_PATH: str = "assets/fonts/Minecraft.ttf"
+MAIN_MENU_BG_PATH: str = resource_path("assets/backgrounds/main_menu_frame.png")
+MAIN_TITLE_PATH: str = resource_path("assets/sprites/ui/menu/main_title.png")
+MAIN_MENU_BTN_PATH: str = resource_path("assets/sprites/ui/menu/main_menu_btn_bg.png")
+FONT_PRIMARY_PATH: str = resource_path("assets/fonts/ThaleahFat.ttf")
+FONT_SECONDARY_PATH: str = resource_path("assets/fonts/Minecraft.ttf")
 
 # ---------------------------------------------------------------------------
 # Gameplay / UI assets
 # ---------------------------------------------------------------------------
-MAIN_GAME_BG_PATH: str = "assets/backgrounds/main_game_frame.png"
-GAME_EXIT_BTN_PATH: str = "assets/sprites/ui/game/btn_exit.png"
-GAME_PAUSE_BTN_PATH: str = "assets/sprites/ui/game/btn_pause.png"
-HEART_ICON_PATH: str = "assets/sprites/ui/game/heart.png"
-HEART_SHEET_PATH: str = "assets/heart.png"
+MAIN_GAME_BG_PATH: str = resource_path("assets/backgrounds/main_game_frame.png")
+GAME_EXIT_BTN_PATH: str = resource_path("assets/sprites/ui/game/btn_exit.png")
+GAME_PAUSE_BTN_PATH: str = resource_path("assets/sprites/ui/game/btn_pause.png")
+HEART_ICON_PATH: str = resource_path("assets/sprites/ui/game/heart.png")
+HEART_SHEET_PATH: str = resource_path("assets/heart.png")
+GAME_ELEMENT_PATH: str = resource_path("assets/game_element.png")
+SETTINGS_UI_DIR: str = resource_path("assets/sprites/ui/settings")
 GAME_EXIT_BTN_RECT: tuple[int, int, int, int] = (684, 20, 99, 99)
 GAME_PAUSE_BTN_RECT: tuple[int, int, int, int] = (20, 20, 99, 99)
 GAME_HUD_RECT: tuple[int, int, int, int] = (144, 46, 516, 136)
@@ -119,7 +164,7 @@ PLAYFIELD_RECT: tuple[int, int, int, int] = (
 # ---------------------------------------------------------------------------
 # Brick assets (assets/sprites/tiles/bricks_export/ – edited transparent PNGs)
 # ---------------------------------------------------------------------------
-BRICKS_ASSET_DIR: str = "assets/sprites/tiles/bricks_export"
+BRICKS_ASSET_DIR: str = resource_path("assets/sprites/tiles/bricks_export")
 
 # 6 active brick colours (grey was corrupted and removed)
 BRICK_COLORS: tuple[str, ...] = (

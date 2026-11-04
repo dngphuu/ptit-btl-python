@@ -147,9 +147,7 @@ def test_settings_menu_volume_slider_click():
 
     # Click at middle (50%)
     mid_x = (_SLIDER_MIN_X + _SLIDER_MAX_X) // 2
-    ev_mid = pygame.event.Event(
-        pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (mid_x, slider_y)}
-    )
+    ev_mid = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (mid_x, slider_y)})
     menu.handle_events([ev_mid])
     assert pytest.approx(menu._volume_slider.value, abs=0.05) == 0.5
 
@@ -163,9 +161,7 @@ def test_settings_menu_volume_slider_drag():
     mid_x = (_SLIDER_MIN_X + _SLIDER_MAX_X) // 2
 
     # Start drag at middle
-    ev_down = pygame.event.Event(
-        pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (mid_x, slider_y)}
-    )
+    ev_down = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (mid_x, slider_y)})
     menu.handle_events([ev_down])
     assert menu._volume_slider._dragging is True
 
@@ -178,9 +174,7 @@ def test_settings_menu_volume_slider_drag():
     assert pytest.approx(menu._volume_slider.value, abs=0.05) == 0.8
 
     # Release drag
-    ev_up = pygame.event.Event(
-        pygame.MOUSEBUTTONUP, {"button": 1, "pos": (drag_x, slider_y)}
-    )
+    ev_up = pygame.event.Event(pygame.MOUSEBUTTONUP, {"button": 1, "pos": (drag_x, slider_y)})
     menu.handle_events([ev_up])
     assert menu._volume_slider._dragging is False
     assert pytest.approx(GameSettings.get_volume(), abs=0.05) == 0.8
@@ -195,16 +189,12 @@ def test_settings_menu_volume_speaker_mute_toggle():
     speaker_pos = (_SPEAKER_RECT.centerx, _SPEAKER_RECT.centery)
 
     # Click speaker to mute
-    ev_mute = pygame.event.Event(
-        pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": speaker_pos}
-    )
+    ev_mute = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": speaker_pos})
     menu.handle_events([ev_mute])
     assert menu._volume_slider.value == 0.0
 
     # Click speaker again to restore
-    ev_unmute = pygame.event.Event(
-        pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": speaker_pos}
-    )
+    ev_unmute = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": speaker_pos})
     menu.handle_events([ev_unmute])
     assert menu._volume_slider.value == 0.7
 

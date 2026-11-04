@@ -7,11 +7,12 @@ Bootstraps pygame, runs the game-state machine.
 
 from __future__ import annotations
 
+import os
 import sys
 
 import pygame
 
-from src.config import SCREEN_HEIGHT, SCREEN_WIDTH, TARGET_FPS
+from src.config import SCREEN_HEIGHT, SCREEN_WIDTH, TARGET_FPS, resource_path
 from src.core.states import GameState
 from src.screens.gameplay import GameplayScreen
 from src.screens.main_menu import MainMenu
@@ -28,7 +29,14 @@ def main() -> None:
         (SCREEN_WIDTH, SCREEN_HEIGHT),
         pygame.RESIZABLE | pygame.SCALED,
     )
-    pygame.display.set_caption("Brick Breaker")
+    pygame.display.set_caption("VisionBrick")
+    icon_path = resource_path("assets/icon.ico")
+    if os.path.exists(icon_path):
+        try:
+            pygame.display.set_icon(pygame.image.load(icon_path))
+        except Exception:
+            pass
+
     clock = pygame.time.Clock()
 
     state: GameState = GameState.MAIN_MENU

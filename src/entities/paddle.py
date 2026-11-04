@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import pygame
 
-from src.config import PADDLE_SPEED, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_Y_OFFSET
+from src.config import GAME_ELEMENT_PATH, PADDLE_HEIGHT, PADDLE_SPEED, PADDLE_WIDTH, PADDLE_Y_OFFSET
 from src.entities.playfield import Playfield
+
 
 class Paddle:
     def __init__(self, playfield: Playfield) -> None:
@@ -20,9 +21,9 @@ class Paddle:
         self.x = playfield.center_x
         self.y = playfield.bottom - PADDLE_Y_OFFSET
         self.vx = 0.0
-        
+
         try:
-            img = pygame.image.load("assets/game_element.png").convert_alpha()
+            img = pygame.image.load(GAME_ELEMENT_PATH).convert_alpha()
             sprite = img.subsurface(pygame.Rect(840, 135, 109, 53))
             self.image = pygame.transform.smoothscale(sprite, (self.width, 30))
         except Exception:
@@ -35,18 +36,18 @@ class Paddle:
             round(self.x - self.width / 2.0),
             round(self.y - self.height / 2.0),
             self.width,
-            self.height
+            self.height,
         )
 
     def update(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
         prev_x = self.x
-        
+
         # Use simple keyboard controls for now
         if keys[pygame.K_LEFT]:
             self.x -= self.speed * dt * 60
         if keys[pygame.K_RIGHT]:
             self.x += self.speed * dt * 60
-            
+
         # Clamp to playfield boundaries (slanted walls)
         half_w = self.width / 2.0
         min_x = self.playfield.get_left_edge(self.y) + half_w
@@ -55,7 +56,7 @@ class Paddle:
             self.x = min_x
         elif self.x > max_x:
             self.x = max_x
-            
+
         if dt > 0:
             self.vx = (self.x - prev_x) / dt
         else:

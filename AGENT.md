@@ -61,10 +61,10 @@ ptit-btl-python/
 | `src/ui/`                | UI primitives (`button`, etc.)             | Implemented |
 | `src/screens/main_menu.py`| Main menu screen & event handling         | Implemented |
 | `src/screens/gameplay.py`| Gameplay screen frame, HUD, and buttons   | Implemented |
-| `src/entities/paddle.py` | Paddle rect, move from normalized x        | Planned     |
-| `src/entities/ball.py`   | Ball physics, velocity, collisions         | Planned     |
-| `src/entities/brick.py`  | Brick grid, HP, destruction                | Planned     |
-| `src/core/game.py`       | Gameplay session loop & collision manager  | Planned     |
+| `src/entities/paddle.py` | Paddle rect, move from normalized x        | Implemented     |
+| `src/entities/ball.py`   | Ball physics, velocity, collisions         | Implemented     |
+| `src/entities/brick.py`  | Brick grid, HP, destruction                | Implemented     |
+| `src/core/game.py`       | Gameplay session loop & collision manager  | Implemented |
 
 ## 4. Essential Commands
 

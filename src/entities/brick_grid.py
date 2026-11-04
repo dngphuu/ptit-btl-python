@@ -131,13 +131,13 @@ class BrickGrid:
         # 3. Calculate bounded brick height
         max_pool_height = self.playfield.height * self.max_height_ratio - self.margin_top
         available_brick_height_sum = max_pool_height - (self.rows - 1) * self.vertical_gap
-        
+
         sum_scales = sum(row_scales)
         if sum_scales > 0:
             max_h_per_scaled_brick = available_brick_height_sum / sum_scales
         else:
             max_h_per_scaled_brick = self.brick_height
-            
+
         actual_brick_height = min(self.brick_height, max(1.0, max_h_per_scaled_brick))
 
         # 4. Position rows cumulatively
@@ -147,9 +147,9 @@ class BrickGrid:
         for r in range(self.rows):
             t = r / max(1, self.rows - 1)
             row_scale = row_scales[r]
-            
+
             row_width = top_pool_width + (bottom_pool_width - top_pool_width) * t
-            
+
             # Calculate brick width for this specific row
             brick_width = (row_width - (self.cols - 1) * self.horizontal_gap) / self.cols
             brick_width = max(1.0, brick_width)
@@ -171,7 +171,7 @@ class BrickGrid:
                     brick.width = brick_width
                     brick.height = actual_brick_height * row_scale
                     brick.scale = row_scale
-                    
+
             # Advance Y for next row (constant visual vertical gap)
             current_y += actual_brick_height * row_scale + self.vertical_gap
 
