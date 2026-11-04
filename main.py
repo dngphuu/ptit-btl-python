@@ -15,6 +15,7 @@ from src.config import SCREEN_HEIGHT, SCREEN_WIDTH, TARGET_FPS
 from src.core.states import GameState
 from src.screens.gameplay import GameplayScreen
 from src.screens.main_menu import MainMenu
+from src.screens.settings import SettingsMenu
 
 
 def main() -> None:
@@ -33,6 +34,7 @@ def main() -> None:
     state: GameState = GameState.MAIN_MENU
     menu = MainMenu(screen)
     gameplay = GameplayScreen(screen)
+    settings = SettingsMenu(screen)
 
     while state != GameState.QUIT:
         dt = clock.tick(TARGET_FPS) / 1000.0
@@ -61,13 +63,19 @@ def main() -> None:
                     gameplay.reset_state()
                     gameplay.play_bgm()
                 elif state == GameState.SETTINGS:
-                    print("[TODO] Transition to SETTINGS")
-                    state = GameState.MAIN_MENU
+                    settings.reset_state()
 
         elif state == GameState.SETTINGS:
-            # TODO: settings screen
-            state = GameState.MAIN_MENU
-            menu._next_state = None
+            settings.handle_events(events)
+            settings.update(dt)
+            settings.draw()
+
+            next_st = settings.next_state
+            if next_st is not None:
+                state = next_st
+                settings.reset_state()
+                if state == GameState.MAIN_MENU:
+                    menu._next_state = None
 
         elif state == GameState.PLAYING:
             gameplay.handle_events(events)

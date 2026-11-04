@@ -28,6 +28,15 @@ class GameSettings:
     def is_sfx_on(cls) -> bool:
         return cls.sfx_volume > 0.0
 
+    @classmethod
+    def is_gesture_on(cls) -> bool:
+        return cls.control_mode == "gesture"
+
+    @classmethod
+    def set_gesture_control(cls, enabled: bool) -> None:
+        cls.control_mode = "gesture" if enabled else "keyboard"
+        cls.save()
+
     # ── persistence ───────────────────────────────────────────────────────
 
     @classmethod

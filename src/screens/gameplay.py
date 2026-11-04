@@ -42,6 +42,7 @@ from src.config import (
     SCREEN_WIDTH,
 )
 from src.core.audio import play_music, stop_music, play_sfx
+from src.core.settings import GameSettings
 from src.core.states import GameState
 from src.entities import Brick, BrickGrid, BrickRenderer, Playfield, Paddle, Ball
 from src.ui.button import MenuButton
@@ -272,38 +273,40 @@ class GameplayScreen:
             
         keys = pygame.key.get_pressed()
         
-        # Process vision input
-        frame = self.camera_pipeline.read()
-        if frame is not None:
-            landmark = self.input_processor.process(frame, flip_horizontal=False)
-            self.landmark = landmark
-            if landmark:
-                InputProcessor.draw_landmarks(frame, landmark)
-                # Map landmark x [0,1] to paddle x
-                target_x = self.playfield.rect.x + landmark.x * self.playfield.rect.width
-                # Smoothly move or just snap. Let's snap for immediate response.
-                self.paddle.x = target_x
-                
-                # Check for closed hand gesture to launch ball
-                if not self.ball.active and landmark.raw_landmarks:
-                    lm = landmark.raw_landmarks
-                    def dist(p1, p2):
-                        return ((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)**0.5
-                    closed = True
-                    for mcp_idx, tip_idx in [(5, 8), (9, 12), (13, 16), (17, 20)]:
-                        if dist(lm[tip_idx], lm[0]) > dist(lm[mcp_idx], lm[0]):
-                            closed = False
-                            break
-                    if closed:
-                        import math
-                        self.ball.active = True
-                        self.ball.current_speed = self.ball.base_speed
-                        length = math.hypot(self.ball.vx, self.ball.vy)
-                        if length != 0:
-                            self.ball.vx = (self.ball.vx / length) * self.ball.current_speed
-                            self.ball.vy = (self.ball.vy / length) * self.ball.current_speed
-            
-            self.latest_frame = frame
+        # Process vision input (when gesture control is enabled)
+        if GameSettings.is_gesture_on():
+            frame = self.camera_pipeline.read()
+            if frame is not None:
+                landmark = self.input_processor.process(frame, flip_horizontal=False)
+                self.landmark = landmark
+                if landmark:
+                    InputProcessor.draw_landmarks(frame, landmark)
+                    # Map landmark x [0,1] to paddle x
+                    target_x = self.playfield.rect.x + landmark.x * self.playfield.rect.width
+                    self.paddle.x = target_x
+                    
+                    # Check for closed hand gesture to launch ball
+                    if not self.ball.active and landmark.raw_landmarks:
+                        lm = landmark.raw_landmarks
+                        def dist(p1, p2):
+                            return ((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)**0.5
+                        closed = True
+                        for mcp_idx, tip_idx in [(5, 8), (9, 12), (13, 16), (17, 20)]:
+                            if dist(lm[tip_idx], lm[0]) > dist(lm[mcp_idx], lm[0]):
+                                closed = False
+                                break
+                        if closed:
+                            import math
+                            self.ball.active = True
+                            self.ball.current_speed = self.ball.base_speed
+                            length = math.hypot(self.ball.vx, self.ball.vy)
+                            if length != 0:
+                                self.ball.vx = (self.ball.vx / length) * self.ball.current_speed
+                                self.ball.vy = (self.ball.vy / length) * self.ball.current_speed
+                self.latest_frame = frame
+        else:
+            self.landmark = None
+            self.latest_frame = None
             
         self.paddle.update(keys, dt)
         
