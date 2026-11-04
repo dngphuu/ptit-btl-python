@@ -1,24 +1,15 @@
 """
 src/screens/settings.py
 =======================
-Settings screen matching the cave-themed mockup.
+Settings screen matching the cave-themed mockup design (mockups/settings_menu.png).
 
-Layout (800 × 600):
-  ┌──────────────────────────────────────────────┐
-  │          [ SETTINGS title banner ]            │
-  │                                               │
-  │     ┌──────────── PANEL ──────────────┐       │
-  │     │         AUDIO                   │       │
-  │     │  MUSIC VOLUME  ══■════════  ♪   │       │
-  │     │  SOUND EFFECTS ══════■════  🔊  │       │
-  │     │  ─ ─ ── ─── ── ─── ── ─── ─    │       │
-  │     │         CONTROLS                │       │
-  │     │  CONTROL MODE                   │       │
-  │     │  [KEYBOARD]   [GESTURE]         │       │
-  │     │  ─ ─ ── ─── ── ─── ── ─── ─    │       │
-  │     └─────────────────────────────────┘       │
-  │               [ BACK ]                        │
-  └──────────────────────────────────────────────┘
+Layout (800 x 600 logical resolution):
+  - Cave background with glowing mushrooms, crystals, and lantern.
+  - Centered stone & parchment plaque dialog box with corner brackets.
+  - "SETTINGS" title header plaque mounted over the top border.
+  - "GESTURE CONTROL" label with pixel-art [ ON | OFF ] toggle switch button.
+  - "VOLUME" label with slider bar and speaker icon.
+  - "BACK" stone button at the bottom.
 """
 
 from __future__ import annotations
@@ -35,419 +26,581 @@ from src.config import (
     SCREEN_WIDTH,
     SFX_CLICK_PATH,
 )
-from src.core.audio import play_music, play_sfx, stop_music, update_music_volume
-from src.core.states import GameState
+from src.core.audio import play_sfx, set_music_volume
 from src.core.settings import GameSettings
+from src.core.states import GameState
 
 # ---------------------------------------------------------------------------
 # Asset paths
 # ---------------------------------------------------------------------------
 _SETTINGS_UI_DIR = "assets/sprites/ui/settings"
-_PANEL_PATH = os.path.join(_SETTINGS_UI_DIR, "panel.png")
-_TITLE_PATH = os.path.join(_SETTINGS_UI_DIR, "title_banner.png")
+_BASE_BG_PATH = os.path.join(_SETTINGS_UI_DIR, "settings_menu_base.png")
+_BTN_TOGGLE_ON_PATH = os.path.join(_SETTINGS_UI_DIR, "btn_toggle_on.png")
+_BTN_TOGGLE_OFF_PATH = os.path.join(_SETTINGS_UI_DIR, "btn_toggle_off.png")
 _SLIDER_TRACK_PATH = os.path.join(_SETTINGS_UI_DIR, "slider_track.png")
 _SLIDER_KNOB_PATH = os.path.join(_SETTINGS_UI_DIR, "slider_knob.png")
-_SEPARATOR_PATH = os.path.join(_SETTINGS_UI_DIR, "separator.png")
-_BTN_TOGGLE_ACTIVE_PATH = os.path.join(_SETTINGS_UI_DIR, "btn_toggle_active.png")
-_BTN_TOGGLE_INACTIVE_PATH = os.path.join(_SETTINGS_UI_DIR, "btn_toggle_inactive.png")
-_BTN_BACK_PATH = os.path.join(_SETTINGS_UI_DIR, "btn_back_large.png")
+_SLIDER_FILL_PATH = os.path.join(_SETTINGS_UI_DIR, "slider_fill.png")
 
 # ---------------------------------------------------------------------------
-# Layout constants (800 × 600 logical)
+# Layout coordinates (800 x 600 logical resolution)
 # ---------------------------------------------------------------------------
+_TOGGLE_RECT = pygame.Rect(417, 207, 178, 64)
+_SLIDER_RECT = pygame.Rect(377, 298, 189, 44)
+_SLIDER_MIN_X = 390
+_SLIDER_MAX_X = 552
+_SLIDER_CENTER_Y = 319
+_SPEAKER_RECT = pygame.Rect(572, 304, 35, 32)
+_BACK_RECT = pygame.Rect(304, 369, 202, 72)
+
 _TEXT_COLOR = (66, 19, 14)
 _TEXT_COLOR_HOVER = (135, 36, 26)
-_SECTION_COLOR = (120, 30, 25)
-
-# Panel
-_PANEL_W = 440
-_PANEL_H = 380
-_PANEL_X = (SCREEN_WIDTH - _PANEL_W) // 2
-_PANEL_Y = 140
-
-# Title banner
-_TITLE_W = 360
-_TITLE_H = 80
-_TITLE_X = (SCREEN_WIDTH - _TITLE_W) // 2
-_TITLE_Y = 44
-
-# Slider geometry (inside panel)
-_SLIDER_LABEL_X = _PANEL_X + 30
-_SLIDER_TRACK_X = _PANEL_X + 195
-_SLIDER_TRACK_W = 190
-_SLIDER_TRACK_H = 22
-_SLIDER_KNOB_W = 30
-_SLIDER_KNOB_H = 22
-_MUSIC_SLIDER_Y = _PANEL_Y + 80
-_SFX_SLIDER_Y = _PANEL_Y + 120
-
-# Separator
-_SEP_W = _PANEL_W - 50
-_SEP_X = _PANEL_X + 25
-_SEP1_Y = _PANEL_Y + 160
-_SEP2_Y = _PANEL_Y + 310
-
-# Controls section
-_CONTROLS_LABEL_Y = _PANEL_Y + 178
-_CTRL_MODE_LABEL_Y = _PANEL_Y + 210
-_CTRL_BTN_Y = _PANEL_Y + 240
-_CTRL_BTN_W = 140
-_CTRL_BTN_H = 55
-_CTRL_BTN_GAP = 20
-_CTRL_BTN_X_LEFT = (SCREEN_WIDTH - 2 * _CTRL_BTN_W - _CTRL_BTN_GAP) // 2
-_CTRL_BTN_X_RIGHT = _CTRL_BTN_X_LEFT + _CTRL_BTN_W + _CTRL_BTN_GAP
-
-# Back button
-_BACK_W = 180
-_BACK_H = 65
-_BACK_X = (SCREEN_WIDTH - _BACK_W) // 2
-_BACK_Y = _PANEL_Y + _PANEL_H + 20
 
 
-def _load_scaled(path: str, size: tuple[int, int]) -> pygame.Surface | None:
+def _load_image(path: str, size: tuple[int, int] | None = None) -> pygame.Surface | None:
+    """Helper to safely load and scale an image."""
     if not os.path.exists(path):
         return None
-    raw = pygame.image.load(path).convert_alpha()
-    return pygame.transform.smoothscale(raw, size)
+    try:
+        surf = pygame.image.load(path)
+        try:
+            surf = surf.convert_alpha() if surf.get_masks()[3] != 0 else surf.convert()
+        except Exception:
+            pass
+        if size is not None and surf.get_size() != size:
+            surf = pygame.transform.smoothscale(surf, size)
+        return surf
+    except Exception:
+        return None
 
 
-class _VolumeSlider:
-    """Draggable volume slider widget."""
+class GestureToggleButton:
+    """Interactive pixel-art toggle switch button for Gesture Control."""
 
     def __init__(
         self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        value: float,
-        track_surf: pygame.Surface | None,
-        knob_surf: pygame.Surface | None,
+        rect: pygame.Rect,
+        surf_on: pygame.Surface | None,
+        surf_off: pygame.Surface | None,
     ) -> None:
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.value = value  # 0.0 – 1.0
-        self._track_surf = track_surf
+        self.rect = rect
+        self._surf_on = surf_on
+        self._surf_off = surf_off
+        self.is_hovered: bool = False
+        self.is_focused: bool = False
+
+        # Precompute hover overlays
+        self._hover_overlay = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(
+            self._hover_overlay,
+            (255, 255, 255, 35),
+            self._hover_overlay.get_rect(),
+            border_radius=6,
+        )
+
+        self._focus_overlay = pygame.Surface(
+            (self.rect.width + 6, self.rect.height + 6), pygame.SRCALPHA
+        )
+        pygame.draw.rect(
+            self._focus_overlay,
+            (240, 200, 120, 160),
+            self._focus_overlay.get_rect(),
+            2,
+            border_radius=6,
+        )
+
+    def is_on(self) -> bool:
+        return GameSettings.is_gesture_on()
+
+    def toggle(self) -> None:
+        """Flip the toggle state, play SFX, and persist settings."""
+        new_val = not self.is_on()
+        GameSettings.set_gesture_control(new_val)
+        play_sfx(SFX_CLICK_PATH)
+
+    def set_state(self, enabled: bool) -> None:
+        if self.is_on() != enabled:
+            GameSettings.set_gesture_control(enabled)
+            play_sfx(SFX_CLICK_PATH)
+
+    def handle_event(self, ev: pygame.event.Event) -> bool:
+        """Handle mouse and keyboard events. Returns True if state changed."""
+        if ev.type == pygame.MOUSEMOTION:
+            self.is_hovered = self.rect.collidepoint(ev.pos)
+            return False
+
+        if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+            if self.rect.collidepoint(ev.pos):
+                # Clicking the left half directly selects ON, right half selects OFF
+                half_w = self.rect.width // 2
+                if ev.pos[0] < self.rect.x + half_w:
+                    self.set_state(True)
+                else:
+                    self.set_state(False)
+                return True
+
+        if ev.type == pygame.KEYDOWN and self.is_focused:
+            if ev.key in (pygame.K_RETURN, pygame.K_SPACE):
+                self.toggle()
+                return True
+            elif ev.key in (pygame.K_LEFT, pygame.K_a):
+                self.set_state(True)
+                return True
+            elif ev.key in (pygame.K_RIGHT, pygame.K_d):
+                self.set_state(False)
+                return True
+
+        return False
+
+    def draw(self, surface: pygame.Surface) -> None:
+        surf = self._surf_on if self.is_on() else self._surf_off
+        if surf is not None:
+            surface.blit(surf, self.rect.topleft)
+        else:
+            # Procedural fallback
+            bg_col = (70, 130, 80) if self.is_on() else (140, 50, 50)
+            pygame.draw.rect(surface, bg_col, self.rect, border_radius=6)
+            pygame.draw.rect(surface, (50, 40, 40), self.rect, 3, border_radius=6)
+
+        # Hover highlight
+        if self.is_hovered:
+            surface.blit(self._hover_overlay, self.rect.topleft)
+
+        # Keyboard focus indicator
+        if self.is_focused:
+            surface.blit(self._focus_overlay, (self.rect.x - 3, self.rect.y - 3))
+
+
+class VolumeSlider:
+    """
+    Interactive pixel-art volume slider widget matching the cave-themed aesthetic.
+    Supports dragging, clicking along the track, speaker mute toggle, and keyboard navigation.
+    """
+
+    def __init__(
+        self,
+        rect: pygame.Rect = _SLIDER_RECT,
+        knob_surf: pygame.Surface | None = None,
+        fill_surf: pygame.Surface | None = None,
+        track_surf: pygame.Surface | None = None,
+        speaker_rect: pygame.Rect = _SPEAKER_RECT,
+    ) -> None:
+        self.rect = rect
         self._knob_surf = knob_surf
-        self._dragging = False
+        self._fill_surf = fill_surf
+        self._track_surf = track_surf
+        self._speaker_rect = speaker_rect
+
+        self.min_x: int = _SLIDER_MIN_X
+        self.max_x: int = _SLIDER_MAX_X
+        self.center_y: int = _SLIDER_CENTER_Y
+        self.travel: int = max(1, self.max_x - self.min_x)
+
+        self._dragging: bool = False
+        self.is_hovered: bool = False
+        self.is_focused: bool = False
+        self._last_unmuted_volume: float = 0.5
+
+        # Knob dimensions
+        self.knob_width: int = 24 if self._knob_surf is None else self._knob_surf.get_width()
+        self.knob_height: int = 44 if self._knob_surf is None else self._knob_surf.get_height()
+
+        # Hover & Focus overlays
+        self._knob_hover_overlay = pygame.Surface(
+            (self.knob_width, self.knob_height), pygame.SRCALPHA
+        )
+        self._knob_hover_overlay.fill((255, 255, 255, 45))
+
+        # Focus overlay around slider track
+        self._focus_overlay = pygame.Surface(
+            (self.rect.width + 10, self.rect.height + 8), pygame.SRCALPHA
+        )
+        pygame.draw.rect(
+            self._focus_overlay,
+            (240, 200, 120, 160),
+            self._focus_overlay.get_rect(),
+            2,
+            border_radius=6,
+        )
+
+        # Mute indicator (subtle red cross for speaker icon when muted)
+        self._mute_overlay = pygame.Surface(self._speaker_rect.size, pygame.SRCALPHA)
+        pygame.draw.line(
+            self._mute_overlay,
+            (210, 50, 50, 220),
+            (6, 6),
+            (self._speaker_rect.width - 6, self._speaker_rect.height - 6),
+            3,
+        )
+        pygame.draw.line(
+            self._mute_overlay,
+            (210, 50, 50, 220),
+            (6, self._speaker_rect.height - 6),
+            (self._speaker_rect.width - 6, 6),
+            3,
+        )
 
     @property
-    def rect(self) -> pygame.Rect:
-        return pygame.Rect(self.x, self.y, self.width, self.height)
+    def value(self) -> float:
+        return GameSettings.get_volume()
+
+    def set_value(self, val: float, play_sound: bool = False) -> None:
+        new_val = max(0.0, min(1.0, round(float(val), 2)))
+        if abs(new_val - self.value) > 0.001:
+            if new_val > 0.0:
+                self._last_unmuted_volume = new_val
+            GameSettings.set_volume(new_val)
+            set_music_volume(new_val)
+            if play_sound:
+                play_sfx(SFX_CLICK_PATH)
+
+    def toggle_mute(self) -> None:
+        if self.value > 0.0:
+            self._last_unmuted_volume = self.value
+            self.set_value(0.0, play_sound=True)
+        else:
+            restore_vol = (
+                self._last_unmuted_volume if self._last_unmuted_volume > 0.0 else 0.5
+            )
+            self.set_value(restore_vol, play_sound=True)
+
+    @property
+    def knob_center_x(self) -> int:
+        return self.min_x + int(self.value * self.travel)
 
     @property
     def knob_rect(self) -> pygame.Rect:
-        kx = self.x + int(self.value * (self.width - _SLIDER_KNOB_W))
-        return pygame.Rect(kx, self.y - 1, _SLIDER_KNOB_W, self.height + 2)
+        kx = self.knob_center_x
+        return pygame.Rect(
+            kx - self.knob_width // 2,
+            self.center_y - self.knob_height // 2,
+            self.knob_width,
+            self.knob_height,
+        )
+
+    def _val_from_mouse_x(self, mx: int) -> float:
+        raw = (mx - self.min_x) / float(self.travel)
+        return max(0.0, min(1.0, round(raw, 2)))
 
     def handle_event(self, ev: pygame.event.Event) -> bool:
-        """Returns True if value changed."""
-        changed = False
+        """Handle mouse motion, drag, click, and keyboard events."""
+        if ev.type == pygame.MOUSEMOTION:
+            slider_hit = self.rect.inflate(14, 14).collidepoint(ev.pos)
+            speaker_hit = self._speaker_rect.collidepoint(ev.pos)
+            self.is_hovered = slider_hit or speaker_hit
+
+            if self._dragging:
+                new_val = self._val_from_mouse_x(ev.pos[0])
+                if abs(new_val - self.value) > 0.001:
+                    self.set_value(new_val)
+                    return True
+            return False
+
         if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-            # Click on knob or track
-            expanded = self.rect.inflate(10, 20)
-            if expanded.collidepoint(ev.pos):
+            # Check speaker click (mute toggle)
+            if self._speaker_rect.collidepoint(ev.pos):
+                self.toggle_mute()
+                return True
+
+            # Check slider track/knob click (start drag)
+            if self.rect.inflate(14, 14).collidepoint(ev.pos):
                 self._dragging = True
-                changed = self._update_from_mouse(ev.pos[0])
-        elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
+                new_val = self._val_from_mouse_x(ev.pos[0])
+                self.set_value(new_val, play_sound=True)
+                return True
+
+        if ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
             if self._dragging:
                 self._dragging = False
-        elif ev.type == pygame.MOUSEMOTION:
-            if self._dragging:
-                changed = self._update_from_mouse(ev.pos[0])
-        return changed
+                GameSettings.save()
+                return True
 
-    def _update_from_mouse(self, mx: int) -> bool:
-        old = self.value
-        raw = (mx - self.x) / max(1, self.width - _SLIDER_KNOB_W)
-        self.value = max(0.0, min(1.0, raw))
-        # Snap to 0.05 increments
-        self.value = round(self.value * 20) / 20
-        return abs(self.value - old) > 0.001
+        if ev.type == pygame.KEYDOWN and self.is_focused:
+            if ev.key in (pygame.K_LEFT, pygame.K_a):
+                self.set_value(self.value - 0.05, play_sound=True)
+                return True
+            elif ev.key in (pygame.K_RIGHT, pygame.K_d):
+                self.set_value(self.value + 0.05, play_sound=True)
+                return True
+            elif ev.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_m):
+                self.toggle_mute()
+                return True
+            elif ev.key == pygame.K_HOME:
+                self.set_value(0.0, play_sound=True)
+                return True
+            elif ev.key == pygame.K_END:
+                self.set_value(1.0, play_sound=True)
+                return True
+
+        return False
 
     def draw(self, surface: pygame.Surface) -> None:
-        # Track
+        """Render the volume slider (track overlay, fill segments, knob, and indicators)."""
+        # Optional: draw base track if supplied
         if self._track_surf is not None:
-            surface.blit(self._track_surf, (self.x, self.y))
-        else:
-            pygame.draw.rect(surface, (80, 50, 40), self.rect, border_radius=4)
-            inner = pygame.Rect(self.x + 2, self.y + 2, self.width - 4, self.height - 4)
-            pygame.draw.rect(surface, (140, 100, 80), inner, border_radius=3)
+            surface.blit(self._track_surf, (self.rect.x, 303))
 
-        # Filled portion
-        fill_w = int(self.value * (self.width - _SLIDER_KNOB_W)) + _SLIDER_KNOB_W // 2
-        fill_rect = pygame.Rect(self.x + 3, self.y + 3, fill_w - 3, self.height - 6)
-        fill_surf = pygame.Surface(fill_rect.size, pygame.SRCALPHA)
-        fill_surf.fill((160, 80, 60, 80))
-        surface.blit(fill_surf, fill_rect.topleft)
+        # 1. Filled groove segments
+        kx = self.knob_center_x
+        fill_w = kx - self.min_x
+        if fill_w > 0:
+            if self._fill_surf is not None:
+                max_w = min(self._fill_surf.get_width(), fill_w)
+                surface.blit(
+                    self._fill_surf.subsurface((0, 0, max_w, 15)),
+                    (self.min_x, 312),
+                )
+            else:
+                # Fallback filled color
+                pygame.draw.rect(
+                    surface,
+                    (130, 110, 115),
+                    (self.min_x, 312, fill_w, 15),
+                    border_radius=2,
+                )
 
-        # Knob
-        kr = self.knob_rect
+        # 2. Knob
+        k_rect = self.knob_rect
         if self._knob_surf is not None:
-            surface.blit(self._knob_surf, kr.topleft)
+            surface.blit(self._knob_surf, k_rect.topleft)
         else:
-            pygame.draw.rect(surface, (100, 60, 50), kr, border_radius=4)
-            pygame.draw.rect(surface, (60, 30, 25), kr, 2, border_radius=4)
+            pygame.draw.rect(surface, (140, 120, 130), k_rect, border_radius=4)
+            pygame.draw.rect(surface, (45, 30, 35), k_rect, 2, border_radius=4)
+
+        # Hover highlight on knob
+        if self.is_hovered or self._dragging:
+            surface.blit(self._knob_hover_overlay, k_rect.topleft)
+
+        # Keyboard focus indicator around slider track
+        if self.is_focused:
+            surface.blit(
+                self._focus_overlay,
+                (self.rect.x - 5, self.rect.y - 4),
+            )
+
+        # Mute indicator on speaker if volume is 0
+        if self.value <= 0.0:
+            surface.blit(self._mute_overlay, self._speaker_rect.topleft)
 
 
 class SettingsMenu:
-    """Settings menu screen with volume sliders and control mode toggles."""
+    """
+    Settings menu screen matching mockups/settings_menu.png.
+
+    Features:
+      - Complete main layout matching the cave aesthetic.
+      - Interactive ON/OFF toggle switch button for Gesture Control.
+      - Interactive Volume Slider with drag, click-to-position, and mute toggle.
+      - Seamless integration with GameSettings and persistence to settings.json.
+      - Interactive BACK button returning to MAIN_MENU.
+      - Full mouse and keyboard navigation support.
+    """
 
     def __init__(self, screen: pygame.Surface) -> None:
         self._screen = screen
         self._next_state: GameState | None = None
 
-        # ── Background ────────────────────────────────────────────────────
-        self._bg: pygame.Surface
-        if os.path.exists(MAIN_MENU_BG_PATH):
-            raw_bg = pygame.image.load(MAIN_MENU_BG_PATH).convert()
-            if raw_bg.get_size() != (SCREEN_WIDTH, SCREEN_HEIGHT):
-                self._bg = pygame.transform.smoothscale(
-                    raw_bg, (SCREEN_WIDTH, SCREEN_HEIGHT)
-                )
-            else:
-                self._bg = raw_bg
-        else:
-            self._bg = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-            self._bg.fill((35, 25, 30))
+        # ── Base Layout Background ────────────────────────────────────────
+        self._base_surf: pygame.Surface | None = _load_image(
+            _BASE_BG_PATH, (SCREEN_WIDTH, SCREEN_HEIGHT)
+        )
+        if self._base_surf is None:
+            # Fallback to main menu cave bg if custom base doesn't exist
+            self._base_surf = _load_image(
+                MAIN_MENU_BG_PATH, (SCREEN_WIDTH, SCREEN_HEIGHT)
+            )
+
+        # ── Toggle Button Sprites ─────────────────────────────────────────
+        toggle_on_surf = _load_image(
+            _BTN_TOGGLE_ON_PATH, (_TOGGLE_RECT.width, _TOGGLE_RECT.height)
+        )
+        toggle_off_surf = _load_image(
+            _BTN_TOGGLE_OFF_PATH, (_TOGGLE_RECT.width, _TOGGLE_RECT.height)
+        )
+
+        self._toggle_btn = GestureToggleButton(
+            _TOGGLE_RECT, toggle_on_surf, toggle_off_surf
+        )
+
+        # ── Volume Slider Sprites ─────────────────────────────────────────
+        knob_surf = _load_image(_SLIDER_KNOB_PATH)
+        fill_surf = _load_image(_SLIDER_FILL_PATH)
+        track_surf = _load_image(_SLIDER_TRACK_PATH)
+
+        self._volume_slider = VolumeSlider(
+            rect=_SLIDER_RECT,
+            knob_surf=knob_surf,
+            fill_surf=fill_surf,
+            track_surf=track_surf,
+            speaker_rect=_SPEAKER_RECT,
+        )
+
+        # ── Back Button ───────────────────────────────────────────────────
+        self._back_rect = _BACK_RECT
+        self._back_hovered = False
+        self._back_focused = False
+
+        # Back button hover & focus overlays
+        self._back_hover_overlay = pygame.Surface(self._back_rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(
+            self._back_hover_overlay,
+            (255, 255, 200, 35),
+            self._back_hover_overlay.get_rect(),
+            border_radius=4,
+        )
+        pygame.draw.rect(
+            self._back_hover_overlay,
+            (255, 230, 160, 140),
+            self._back_hover_overlay.get_rect(),
+            2,
+            border_radius=4,
+        )
+
+        self._back_focus_overlay = pygame.Surface(
+            (self._back_rect.width + 6, self._back_rect.height + 6), pygame.SRCALPHA
+        )
+        pygame.draw.rect(
+            self._back_focus_overlay,
+            (240, 200, 120, 160),
+            self._back_focus_overlay.get_rect(),
+            2,
+            border_radius=6,
+        )
+
+        # ── Focus management for keyboard navigation ──────────────────────
+        # 0: Gesture Toggle, 1: Volume Slider, 2: Back Button
+        self._focus_index: int = -1
 
         # ── Fonts ─────────────────────────────────────────────────────────
-        font_path = None
-        if os.path.exists(FONT_PRIMARY_PATH):
-            font_path = FONT_PRIMARY_PATH
-        elif os.path.exists(FONT_SECONDARY_PATH):
-            font_path = FONT_SECONDARY_PATH
-
-        self._section_font = pygame.font.Font(font_path, 30)
-        self._label_font = pygame.font.Font(font_path, 20)
-        self._btn_font = pygame.font.Font(font_path, 24)
-        self._back_font = pygame.font.Font(font_path, 32)
-
-        # ── Sprites ───────────────────────────────────────────────────────
-        self._panel_surf = _load_scaled(_PANEL_PATH, (_PANEL_W, _PANEL_H))
-        self._title_surf = _load_scaled(_TITLE_PATH, (_TITLE_W, _TITLE_H))
-        self._separator_surf = _load_scaled(_SEPARATOR_PATH, (_SEP_W, 6))
-        self._back_surf = _load_scaled(_BTN_BACK_PATH, (_BACK_W, _BACK_H))
-
-        slider_track_surf = _load_scaled(
-            _SLIDER_TRACK_PATH, (_SLIDER_TRACK_W, _SLIDER_TRACK_H)
+        font_path = (
+            FONT_PRIMARY_PATH
+            if os.path.exists(FONT_PRIMARY_PATH)
+            else (FONT_SECONDARY_PATH if os.path.exists(FONT_SECONDARY_PATH) else None)
         )
-        slider_knob_surf = _load_scaled(
-            _SLIDER_KNOB_PATH, (_SLIDER_KNOB_W, _SLIDER_KNOB_H)
-        )
-
-        self._btn_active_surf = _load_scaled(
-            _BTN_TOGGLE_ACTIVE_PATH, (_CTRL_BTN_W, _CTRL_BTN_H)
-        )
-        self._btn_inactive_surf = _load_scaled(
-            _BTN_TOGGLE_INACTIVE_PATH, (_CTRL_BTN_W, _CTRL_BTN_H)
-        )
-
-        # Back button hover surface
-        self._back_hover_surf: pygame.Surface | None = None
-        if self._back_surf is not None:
-            self._back_hover_surf = self._back_surf.copy()
-            tint = pygame.Surface((_BACK_W, _BACK_H), pygame.SRCALPHA)
-            tint.fill((255, 255, 220, 32))
-            self._back_hover_surf.blit(tint, (0, 0))
-
-        # ── Sliders ───────────────────────────────────────────────────────
-        self._music_slider = _VolumeSlider(
-            _SLIDER_TRACK_X,
-            _MUSIC_SLIDER_Y,
-            _SLIDER_TRACK_W,
-            _SLIDER_TRACK_H,
-            GameSettings.music_volume,
-            slider_track_surf,
-            slider_knob_surf,
-        )
-        self._sfx_slider = _VolumeSlider(
-            _SLIDER_TRACK_X,
-            _SFX_SLIDER_Y,
-            _SLIDER_TRACK_W,
-            _SLIDER_TRACK_H,
-            GameSettings.sfx_volume,
-            slider_track_surf,
-            slider_knob_surf,
-        )
-
-        # ── Control mode toggle rects ─────────────────────────────────────
-        self._kb_rect = pygame.Rect(
-            _CTRL_BTN_X_LEFT, _CTRL_BTN_Y, _CTRL_BTN_W, _CTRL_BTN_H
-        )
-        self._gesture_rect = pygame.Rect(
-            _CTRL_BTN_X_RIGHT, _CTRL_BTN_Y, _CTRL_BTN_W, _CTRL_BTN_H
-        )
-
-        # Back button rect
-        self._back_rect = pygame.Rect(_BACK_X, _BACK_Y, _BACK_W, _BACK_H)
-        self._back_hovered = False
+        self._font = pygame.font.Font(font_path, 28)
 
     # ------------------------------------------------------------------
     # State interface
     # ------------------------------------------------------------------
 
     def reset_state(self) -> None:
+        """Reset internal navigation state upon entering the screen."""
         self._next_state = None
-        self._music_slider.value = GameSettings.music_volume
-        self._sfx_slider.value = GameSettings.sfx_volume
+        self._focus_index = -1
+        self._back_hovered = False
+        self._toggle_btn.is_hovered = False
+        self._toggle_btn.is_focused = False
+        self._volume_slider.is_hovered = False
+        self._volume_slider.is_focused = False
+        self._volume_slider._dragging = False
+        self._back_focused = False
+        GameSettings.load()
 
     @property
     def next_state(self) -> GameState | None:
+        """Next GameState requested by user interaction, or None."""
         return self._next_state
 
     # ------------------------------------------------------------------
-    # Game-loop
+    # Event handling
     # ------------------------------------------------------------------
 
     def handle_events(self, events: list[pygame.event.Event]) -> None:
         for ev in events:
-            # Sliders
-            if self._music_slider.handle_event(ev):
-                GameSettings.music_volume = self._music_slider.value
-                update_music_volume()
-                GameSettings.save()
-
-            if self._sfx_slider.handle_event(ev):
-                GameSettings.sfx_volume = self._sfx_slider.value
-                GameSettings.save()
-
-            # Mouse interactions
+            # Mouse motion: check hovers and update cursor
             if ev.type == pygame.MOUSEMOTION:
+                self._toggle_btn.handle_event(ev)
+                self._volume_slider.handle_event(ev)
                 self._back_hovered = self._back_rect.collidepoint(ev.pos)
+                if (
+                    self._toggle_btn.is_hovered
+                    or self._volume_slider.is_hovered
+                    or self._volume_slider._dragging
+                    or self._back_hovered
+                ):
+                    try:
+                        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+                    except Exception:
+                        pass
+                else:
+                    try:
+                        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+                    except Exception:
+                        pass
 
-            if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                pos = ev.pos
-                # Control mode toggle
-                if self._kb_rect.collidepoint(pos):
-                    GameSettings.control_mode = "keyboard"
-                    play_sfx(SFX_CLICK_PATH)
-                    GameSettings.save()
-                elif self._gesture_rect.collidepoint(pos):
-                    GameSettings.control_mode = "gesture"
-                    play_sfx(SFX_CLICK_PATH)
-                    GameSettings.save()
-
-            if ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
-                pos = ev.pos
-                if self._back_rect.collidepoint(pos):
+            # Mouse button click
+            elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                # Toggle button
+                if self._toggle_btn.handle_event(ev):
+                    pass
+                # Volume slider
+                elif self._volume_slider.handle_event(ev):
+                    pass
+                # Back button
+                elif self._back_rect.collidepoint(ev.pos):
                     play_sfx(SFX_CLICK_PATH)
                     self._next_state = GameState.MAIN_MENU
 
-            # Keyboard
-            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
-                self._next_state = GameState.MAIN_MENU
+            # Mouse button release
+            elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
+                self._volume_slider.handle_event(ev)
+
+            # Keyboard navigation
+            elif ev.type == pygame.KEYDOWN:
+                if ev.key == pygame.K_ESCAPE:
+                    play_sfx(SFX_CLICK_PATH)
+                    self._next_state = GameState.MAIN_MENU
+                elif ev.key in (pygame.K_UP, pygame.K_w):
+                    self._focus_index = (self._focus_index - 1) % 3
+                    self._update_keyboard_focus()
+                elif ev.key in (pygame.K_DOWN, pygame.K_s, pygame.K_TAB):
+                    self._focus_index = (self._focus_index + 1) % 3
+                    self._update_keyboard_focus()
+                elif ev.key in (pygame.K_RETURN, pygame.K_SPACE):
+                    if self._focus_index == 0:
+                        self._toggle_btn.toggle()
+                    elif self._focus_index == 1:
+                        self._volume_slider.toggle_mute()
+                    elif self._focus_index == 2:
+                        play_sfx(SFX_CLICK_PATH)
+                        self._next_state = GameState.MAIN_MENU
+                elif ev.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_a, pygame.K_d):
+                    if self._focus_index == 0:
+                        self._toggle_btn.handle_event(ev)
+                    elif self._focus_index == 1:
+                        self._volume_slider.handle_event(ev)
+
+    def _update_keyboard_focus(self) -> None:
+        self._toggle_btn.is_focused = self._focus_index == 0
+        self._volume_slider.is_focused = self._focus_index == 1
+        self._back_focused = self._focus_index == 2
 
     def update(self, dt: float) -> None:
-        del dt
+        del dt  # Unused for static frame
+
+    # ------------------------------------------------------------------
+    # Rendering
+    # ------------------------------------------------------------------
 
     def draw(self) -> None:
-        # 1. Background
-        self._screen.blit(self._bg, (0, 0))
-
-        # 2. Title banner
-        if self._title_surf is not None:
-            self._screen.blit(self._title_surf, (_TITLE_X, _TITLE_Y))
-        # Draw "SETTINGS" text on the title banner
-        title_text = self._section_font.render("SETTINGS", True, _SECTION_COLOR)
-        title_text_rect = title_text.get_rect(
-            center=(_TITLE_X + _TITLE_W // 2, _TITLE_Y + _TITLE_H // 2 + 8)
-        )
-        self._screen.blit(title_text, title_text_rect)
-
-        # 3. Panel
-        if self._panel_surf is not None:
-            self._screen.blit(self._panel_surf, (_PANEL_X, _PANEL_Y))
-
-        # 4. AUDIO section
-        audio_header = self._section_font.render("AUDIO", True, _SECTION_COLOR)
-        self._screen.blit(
-            audio_header,
-            audio_header.get_rect(
-                center=(_PANEL_X + _PANEL_W // 2, _PANEL_Y + 45)
-            ),
-        )
-
-        # Music Volume label + slider
-        music_lbl = self._label_font.render("MUSIC VOLUME", True, _TEXT_COLOR)
-        self._screen.blit(music_lbl, (_SLIDER_LABEL_X, _MUSIC_SLIDER_Y + 2))
-        self._music_slider.draw(self._screen)
-        # Music note icon text
-        note_text = self._label_font.render("♪", True, _TEXT_COLOR)
-        self._screen.blit(
-            note_text,
-            (_SLIDER_TRACK_X + _SLIDER_TRACK_W + 10, _MUSIC_SLIDER_Y + 1),
-        )
-
-        # SFX Volume label + slider
-        sfx_lbl = self._label_font.render("SOUND EFFECTS", True, _TEXT_COLOR)
-        self._screen.blit(sfx_lbl, (_SLIDER_LABEL_X, _SFX_SLIDER_Y + 2))
-        self._sfx_slider.draw(self._screen)
-        # Speaker icon text
-        spk_text = self._label_font.render("🔊", True, _TEXT_COLOR)
-        self._screen.blit(
-            spk_text,
-            (_SLIDER_TRACK_X + _SLIDER_TRACK_W + 10, _SFX_SLIDER_Y + 1),
-        )
-
-        # 5. Separator 1
-        if self._separator_surf is not None:
-            self._screen.blit(self._separator_surf, (_SEP_X, _SEP1_Y))
-
-        # 6. CONTROLS section
-        ctrl_header = self._section_font.render("CONTROLS", True, _SECTION_COLOR)
-        self._screen.blit(
-            ctrl_header,
-            ctrl_header.get_rect(
-                center=(_PANEL_X + _PANEL_W // 2, _CONTROLS_LABEL_Y)
-            ),
-        )
-
-        mode_lbl = self._label_font.render("CONTROL MODE", True, _TEXT_COLOR)
-        self._screen.blit(
-            mode_lbl,
-            mode_lbl.get_rect(
-                center=(_PANEL_X + _PANEL_W // 2, _CTRL_MODE_LABEL_Y)
-            ),
-        )
-
-        # Keyboard toggle button
-        is_kb = GameSettings.control_mode == "keyboard"
-        kb_surf = self._btn_active_surf if is_kb else self._btn_inactive_surf
-        if kb_surf is not None:
-            self._screen.blit(kb_surf, self._kb_rect.topleft)
-        kb_text = self._btn_font.render("KEYBOARD", True, (255, 255, 255) if is_kb else _TEXT_COLOR)
-        self._screen.blit(
-            kb_text, kb_text.get_rect(center=self._kb_rect.center)
-        )
-
-        # Gesture toggle button
-        is_gs = GameSettings.control_mode == "gesture"
-        gs_surf = self._btn_active_surf if is_gs else self._btn_inactive_surf
-        if gs_surf is not None:
-            self._screen.blit(gs_surf, self._gesture_rect.topleft)
-        gs_text = self._btn_font.render("GESTURE", True, (255, 255, 255) if is_gs else _TEXT_COLOR)
-        self._screen.blit(
-            gs_text, gs_text.get_rect(center=self._gesture_rect.center)
-        )
-
-        # 7. Separator 2
-        if self._separator_surf is not None:
-            self._screen.blit(self._separator_surf, (_SEP_X, _SEP2_Y))
-
-        # 8. BACK button
-        back_surf = self._back_hover_surf if self._back_hovered else self._back_surf
-        if back_surf is not None:
-            self._screen.blit(back_surf, self._back_rect.topleft)
+        """Render the complete settings screen layout, volume slider, and interactive toggle."""
+        # 1. Base layout frame (cave + stone dialog + labels + volume slider track + back frame)
+        if self._base_surf is not None:
+            self._screen.blit(self._base_surf, (0, 0))
         else:
-            pygame.draw.rect(self._screen, (100, 60, 40), self._back_rect, border_radius=6)
+            self._screen.fill((35, 25, 30))
 
-        # The back button sprite already has "BACK" baked in, so skip text
-        # unless the sprite is missing.
-        if back_surf is None:
-            back_text = self._back_font.render("BACK", True, _TEXT_COLOR)
+        # 2. Interactive Gesture Control ON/OFF button
+        self._toggle_btn.draw(self._screen)
+
+        # 3. Interactive Volume Slider (groove fill, knob, and overlays)
+        self._volume_slider.draw(self._screen)
+
+        # 4. Back button hover & keyboard focus feedback
+        if self._back_hovered:
+            self._screen.blit(self._back_hover_overlay, self._back_rect.topleft)
+
+        if self._back_focused:
             self._screen.blit(
-                back_text, back_text.get_rect(center=self._back_rect.center)
+                self._back_focus_overlay,
+                (self._back_rect.x - 3, self._back_rect.y - 3),
             )
