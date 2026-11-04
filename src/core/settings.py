@@ -37,6 +37,27 @@ class GameSettings:
         cls.control_mode = "gesture" if enabled else "keyboard"
         cls.save()
 
+    @classmethod
+    def get_volume(cls) -> float:
+        return cls.music_volume
+
+    @classmethod
+    def set_volume(cls, val: float) -> None:
+        clamped = max(0.0, min(1.0, round(float(val), 2)))
+        cls.music_volume = clamped
+        cls.sfx_volume = clamped
+        cls.save()
+
+    @classmethod
+    def set_music_volume(cls, val: float) -> None:
+        cls.music_volume = max(0.0, min(1.0, round(float(val), 2)))
+        cls.save()
+
+    @classmethod
+    def set_sfx_volume(cls, val: float) -> None:
+        cls.sfx_volume = max(0.0, min(1.0, round(float(val), 2)))
+        cls.save()
+
     # ── persistence ───────────────────────────────────────────────────────
 
     @classmethod
