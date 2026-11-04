@@ -50,7 +50,7 @@ _SLIDER_MIN_X = 390
 _SLIDER_MAX_X = 552
 _SLIDER_CENTER_Y = 319
 _SPEAKER_RECT = pygame.Rect(572, 304, 35, 32)
-_BACK_RECT = pygame.Rect(280, 366, 240, 94)
+_BACK_RECT = pygame.Rect(304, 369, 202, 72)
 
 _TEXT_COLOR = (66, 19, 14)
 _TEXT_COLOR_HOVER = (135, 36, 26)
@@ -90,7 +90,12 @@ class GestureToggleButton:
 
         # Precompute hover overlays
         self._hover_overlay = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-        self._hover_overlay.fill((255, 255, 255, 35))
+        pygame.draw.rect(
+            self._hover_overlay,
+            (255, 255, 255, 35),
+            self._hover_overlay.get_rect(),
+            border_radius=6,
+        )
 
         self._focus_overlay = pygame.Surface(
             (self.rect.width + 6, self.rect.height + 6), pygame.SRCALPHA
@@ -436,10 +441,15 @@ class SettingsMenu:
 
         # Back button hover & focus overlays
         self._back_hover_overlay = pygame.Surface(self._back_rect.size, pygame.SRCALPHA)
-        self._back_hover_overlay.fill((255, 255, 200, 30))
         pygame.draw.rect(
             self._back_hover_overlay,
-            (255, 230, 160, 120),
+            (255, 255, 200, 35),
+            self._back_hover_overlay.get_rect(),
+            border_radius=4,
+        )
+        pygame.draw.rect(
+            self._back_hover_overlay,
+            (255, 230, 160, 140),
             self._back_hover_overlay.get_rect(),
             2,
             border_radius=4,
