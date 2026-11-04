@@ -17,7 +17,7 @@
 
 ---
 
-## 🎓 Thông tin đồ án / Academic Context
+## 🎓 Thông tin dự án
 
 > **Học viện Công nghệ Bưu chính Viễn thông (PTIT)**  
 > **Môn học:** Lập trình với Python (Python Programming)  
