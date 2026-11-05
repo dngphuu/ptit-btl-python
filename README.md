@@ -11,7 +11,7 @@
 
 **VisionBrick** is an arcade 2D Brick Breaker game developed with **Python**, **pygame-ce**, and **Google MediaPipe Tasks API**. Experience fluid paddle control driven by real-time webcam hand tracking or classic keyboard inputs, immersed in a rich retro cave and hieroglyphic stone aesthetic.
 
-[🎮 Game Previews](#-game-previews) • [✨ Features](#-features) • [🕹️ Controls](#-controls) • [🚀 Quick Start](#-local-development--quickstart) • [📦 Standalone Download](#-download-pre-built-binary-windows) • [📐 Architecture](#-system-architecture--how-it-works) • [🎓 Academic Context](#-thông-tin-đồ-án--academic-context)
+[🎮 Game Previews](#-game-previews) • [✨ Features](#-features) • [🕹️ Controls](#-controls) • [🚀 Quick Start](#-local-development--quickstart) • [📦 Standalone Download](#-download-pre-built-binary-windows) • [📐 Architecture](#-system-architecture--how-it-works) • [🎓 Academic Context](#-thông-tin-dự-án)
 
 </div>
 
