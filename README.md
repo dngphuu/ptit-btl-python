@@ -64,6 +64,8 @@
 
 ## 📐 System Architecture & How It Works
 
+> 📖 **Tài liệu phân tích chuyên sâu:** Đọc chi tiết tại file [**HOW_IT_WORKS.md**](HOW_IT_WORKS.md) để tìm hiểu cặn kẽ toàn bộ nguyên lý toán học, mô hình đa luồng bất đồng bộ, thuật toán phối cảnh 2.5D và pipeline xử lý cử chỉ của dự án.
+
 VisionBrick is designed with a strict boundary between computer vision inference and game physics, preventing frame drops and isolating dependencies.
 
 ```mermaid
